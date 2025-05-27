@@ -4,15 +4,15 @@ import React from 'react';
 const Screenshots = () => {
   const screenshots = [
     {
-      src: "/lovable-uploads/f50513a9-0bd0-44cf-9d47-fa834aa2b4e7.png",
+      src: "/lovable-uploads/screen1.png",
       title: "Music Library"
     },
     {
-      src: "/lovable-uploads/d3c70912-663e-4471-8ef2-54fa8351d1e5.png",
+      src: "/lovable-uploads/screen2.png",
       title: "DJ Connection"
     },
     {
-      src: "/lovable-uploads/7fe0bf91-4a56-4849-8125-f46fc7270bae.png",
+      src: "/lovable-uploads/screen3.png",
       title: "Live DJ Sessions"
     }
   ];

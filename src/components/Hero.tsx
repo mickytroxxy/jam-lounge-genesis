@@ -17,14 +17,11 @@ const Hero = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div className="text-center lg:text-left animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-lg rounded-full border border-white/20 mb-8">
-              <Music className="w-4 h-4 text-purple-400 animate-pulse" />
-              <span className="text-sm font-medium text-purple-200">Music • Social • Luxury</span>
-            </div>
+            
             
             <div className="mb-6">
               <img 
-                src="/lovable-uploads/ff9148c0-0f2b-47de-b931-cd56b1125728.png" 
+                src="/lovable-uploads/logo.png" 
                 alt="PlayMyJam Logo" 
                 className="h-20 lg:h-24 mx-auto lg:mx-0"
               />
@@ -41,12 +38,6 @@ const Hero = () => {
               Share your vibe, bid for plays, and shop premium collections.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold px-8 py-4 rounded-full hover-lift">
-                <Play className="w-5 h-5 mr-2" />
-                Join Now
-              </Button>
-            </div>
 
             {/* App Store Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-12">
@@ -66,11 +57,11 @@ const Hero = () => {
 
             <div className="flex items-center gap-8 justify-center lg:justify-start">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">50K+</div>
+                <div className="text-3xl font-bold text-white">10K+</div>
                 <div className="text-sm text-gray-400">Active Users</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">1000+</div>
+                <div className="text-3xl font-bold text-white">500+</div>
                 <div className="text-sm text-gray-400">Partner Clubs</div>
               </div>
               <div className="text-center">
@@ -86,7 +77,7 @@ const Hero = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-2xl opacity-30 scale-110"></div>
               <div className="relative">
                 <img 
-                  src="/lovable-uploads/8e6ea8f7-e845-4add-a486-e2a599de8959.png" 
+                  src="/lovable-uploads/screen3.png" 
                   alt="PlayMyJam App Preview" 
                   className="w-80 h-auto rounded-3xl shadow-2xl"
                 />

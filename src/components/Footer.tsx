@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Music, Instagram, Twitter, Facebook, Youtube, Download } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -54,8 +55,8 @@ const Footer = () => {
             <ul className="space-y-2">
               <li><a href="mailto:playmyjam@empiredigitals.org" className="text-gray-300 hover:text-purple-400 transition-colors">Contact Us</a></li>
               <li><a href="#" className="text-gray-300 hover:text-purple-400 transition-colors">Help Center</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-purple-400 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-purple-400 transition-colors">Terms of Service</a></li>
+              <li><Link to="/privacy" className="text-gray-300 hover:text-purple-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="text-gray-300 hover:text-purple-400 transition-colors">Terms & Conditions</Link></li>
             </ul>
           </div>
         </div>
