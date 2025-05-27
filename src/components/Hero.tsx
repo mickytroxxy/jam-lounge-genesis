@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Download, Music, Star, Headphones, Radio, Zap } from 'lucide-react';
+import { Play, Download, Music, Star, Headphones, Radio, Zap, Heart, Volume2, Disc } from 'lucide-react';
 
 const Hero = () => {
   return (
@@ -22,9 +22,15 @@ const Hero = () => {
               <span className="text-sm font-medium text-purple-200">Music • Social • Luxury</span>
             </div>
             
-            <h1 className="text-5xl lg:text-7xl font-playfair font-bold mb-6 leading-tight">
-              <span className="neon-text">PlayMyJam</span>
-              <br />
+            <div className="mb-6">
+              <img 
+                src="/lovable-uploads/ff9148c0-0f2b-47de-b931-cd56b1125728.png" 
+                alt="PlayMyJam Logo" 
+                className="h-20 lg:h-24 mx-auto lg:mx-0"
+              />
+            </div>
+            
+            <h1 className="text-4xl lg:text-6xl font-playfair font-bold mb-6 leading-tight">
               <span className="text-white">Where Music</span>
               <br />
               <span className="text-white">Meets</span> <span className="neon-text">Luxury</span>
@@ -74,20 +80,19 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Right Content - Phone Mockup */}
+          {/* Right Content - Latest Screenshot */}
           <div className="relative flex justify-center lg:justify-end animate-slide-in-right">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-[3rem] blur-2xl opacity-30 scale-110"></div>
-              <div className="relative bg-black rounded-[3rem] p-2 shadow-2xl">
-                <div className="bg-gray-900 rounded-[2.5rem] overflow-hidden">
-                  <img 
-                    src="/lovable-uploads/8c48309b-ec07-420e-8afb-dc540cef069a.png" 
-                    alt="PlayMyJam App Preview" 
-                    className="w-80 h-auto"
-                  />
-                </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-2xl opacity-30 scale-110"></div>
+              <div className="relative">
+                <img 
+                  src="/lovable-uploads/8e6ea8f7-e845-4add-a486-e2a599de8959.png" 
+                  alt="PlayMyJam App Preview" 
+                  className="w-80 h-auto rounded-3xl shadow-2xl"
+                />
               </div>
-              {/* Floating UI Elements */}
+              
+              {/* Floating UI Elements with more animated icons */}
               <div className="absolute -top-4 -left-4 glass-card p-3 animate-float">
                 <Music className="w-6 h-6 text-purple-400 animate-pulse" />
               </div>
@@ -105,6 +110,15 @@ const Hero = () => {
               </div>
               <div className="absolute bottom-1/3 -left-6 glass-card p-3 animate-float" style={{animationDelay: '5s'}}>
                 <Zap className="w-6 h-6 text-orange-400 animate-pulse" />
+              </div>
+              <div className="absolute top-1/3 -left-10 glass-card p-3 animate-float" style={{animationDelay: '6s'}}>
+                <Heart className="w-6 h-6 text-red-400 animate-pulse" />
+              </div>
+              <div className="absolute bottom-1/2 -right-10 glass-card p-3 animate-float" style={{animationDelay: '7s'}}>
+                <Volume2 className="w-6 h-6 text-cyan-400 animate-pulse" />
+              </div>
+              <div className="absolute top-2/3 -left-4 glass-card p-3 animate-float" style={{animationDelay: '8s'}}>
+                <Disc className="w-6 h-6 text-indigo-400 animate-pulse" />
               </div>
             </div>
           </div>

@@ -5,7 +5,6 @@ import Features from '../components/Features';
 import AppPreview from '../components/AppPreview';
 import Merchandise from '../components/Merchandise';
 import HowItWorks from '../components/HowItWorks';
-import Screenshots from '../components/Screenshots';
 import Contact from '../components/Contact';
 import Footer from '../components/Footer';
 
@@ -16,7 +15,6 @@ const Index = () => {
       <Features />
       <AppPreview />
       <HowItWorks />
-      <Screenshots />
       <Merchandise />
       <Contact />
       <Footer />
