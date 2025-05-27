@@ -1,33 +1,41 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Star } from 'lucide-react';
+import { Download, Star } from 'lucide-react';
 
 const Merchandise = () => {
   const collections = [
     {
-      name: "Tiger Collection",
-      description: "Bold and fierce designs for the untamed music lover",
-      price: "ZAR 1299",
-      image: "/lovable-uploads/ec6c5f0c-9148-4777-beb0-a7046a63039e.png",
-      gsm: "180 GSM Premium Cotton",
-      color: "from-orange-500 to-red-600"
-    },
-    {
-      name: "Panther Collection", 
+      name: "Panther Collection",
       description: "Sleek and sophisticated for the refined audiophile",
       price: "ZAR 999",
-      image: "/lovable-uploads/ec6c5f0c-9148-4777-beb0-a7046a63039e.png",
+      image: "/lovable-uploads/d8a2181c-c7af-45ca-b5c2-f4024812a48d.png",
       gsm: "200 GSM Organic Cotton",
       color: "from-purple-600 to-blue-600"
     },
     {
-      name: "Ghost Collection",
-      description: "Mysterious and ethereal for the underground scene",
+      name: "Panther Collection", 
+      description: "Bold and fierce designs for the untamed music lover",
+      price: "ZAR 1299",
+      image: "/lovable-uploads/8e6ea8f7-e845-4add-a486-e2a599de8959.png",
+      gsm: "180 GSM Premium Cotton",
+      color: "from-blue-600 to-purple-700"
+    },
+    {
+      name: "Panther Collection",
+      description: "Luxury edition with premium finishing details",
       price: "ZAR 2750",
-      image: "/lovable-uploads/ec6c5f0c-9148-4777-beb0-a7046a63039e.png",
+      image: "/lovable-uploads/634aa18e-6d76-43ef-8f97-7632d7c80506.png",
       gsm: "220 GSM Luxury Blend",
-      color: "from-gray-600 to-purple-700"
+      color: "from-yellow-600 to-orange-600"
+    },
+    {
+      name: "Panther Collection",
+      description: "Exclusive design with sophisticated pattern work",
+      price: "ZAR 1999",
+      image: "/lovable-uploads/ff9148c0-0f2b-47de-b931-cd56b1125728.png",
+      gsm: "200 GSM Premium Cotton",
+      color: "from-gray-600 to-blue-700"
     }
   ];
 
@@ -43,7 +51,7 @@ const Merchandise = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {collections.map((collection, index) => (
             <div 
               key={index}
@@ -80,8 +88,8 @@ const Merchandise = () => {
                 </div>
                 
                 <Button className={`w-full bg-gradient-to-r ${collection.color} hover:scale-105 transition-transform duration-300`}>
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Add to Cart
+                  <Download className="w-4 h-4 mr-2" />
+                  Download App
                 </Button>
               </div>
             </div>

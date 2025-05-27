@@ -27,7 +27,7 @@ const Contact = () => {
                 </div>
                 <div>
                   <h4 className="text-white font-semibold">Email Us</h4>
-                  <p className="text-gray-300">hello@playmyjam.com</p>
+                  <p className="text-gray-300">playmyjam@empiredigitals.org</p>
                 </div>
               </div>
               
@@ -37,7 +37,7 @@ const Contact = () => {
                 </div>
                 <div>
                   <h4 className="text-white font-semibold">Call Us</h4>
-                  <p className="text-gray-300">+27 123 456 7890</p>
+                  <p className="text-gray-300">+27 10 510 2699</p>
                 </div>
               </div>
               
@@ -47,9 +47,13 @@ const Contact = () => {
                 </div>
                 <div>
                   <h4 className="text-white font-semibold">Visit Us</h4>
-                  <p className="text-gray-300">Cape Town, South Africa</p>
+                  <p className="text-gray-300">Johannesburg South, South Africa</p>
                 </div>
               </div>
+            </div>
+            
+            <div className="mt-8">
+              <p className="text-sm text-gray-400 mb-4">A project by <span className="text-purple-400 font-semibold">Empire Digitals</span></p>
             </div>
           </div>
 

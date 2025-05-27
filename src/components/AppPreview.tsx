@@ -4,20 +4,20 @@ import React from 'react';
 const AppPreview = () => {
   const screenshots = [
     {
-      src: "/lovable-uploads/1f19cbb2-69db-4f0a-9519-97b10d33a20e.png",
-      title: "DJ Dashboard"
-    },
-    {
-      src: "/lovable-uploads/b19919dd-ef67-4984-bafc-0dcb61c93fb7.png",
+      src: "/lovable-uploads/26eac8ce-d990-4ce5-ac6b-559a991fcfef.png",
       title: "Discover Clubs"
     },
     {
-      src: "/lovable-uploads/0652764b-ceaf-4a05-8443-f2135cbefac3.png",
-      title: "Shopping Cart"
+      src: "/lovable-uploads/89a093b6-ec12-4530-ac24-f5688cffd9f6.png",
+      title: "DJ Dashboard"
     },
     {
-      src: "/lovable-uploads/ec6c5f0c-9148-4777-beb0-a7046a63039e.png",
-      title: "Premium Merchandise"
+      src: "/lovable-uploads/b0910a73-1029-4e1f-87c5-6ad248cd11b1.png",
+      title: "Clubs & Venues"
+    },
+    {
+      src: "/lovable-uploads/112ce7d0-f793-4707-bef9-80936f97134b.png",
+      title: "Shopping Cart"
     }
   ];
 

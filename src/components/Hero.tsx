@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Download, Music } from 'lucide-react';
+import { Play, Download, Music, Star, Headphones, Radio, Zap } from 'lucide-react';
 
 const Hero = () => {
   return (
@@ -18,7 +18,7 @@ const Hero = () => {
           {/* Left Content */}
           <div className="text-center lg:text-left animate-fade-in-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-lg rounded-full border border-white/20 mb-8">
-              <Music className="w-4 h-4 text-purple-400" />
+              <Music className="w-4 h-4 text-purple-400 animate-pulse" />
               <span className="text-sm font-medium text-purple-200">Music • Social • Luxury</span>
             </div>
             
@@ -35,18 +35,30 @@ const Hero = () => {
               Share your vibe, bid for plays, and shop premium collections.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
               <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold px-8 py-4 rounded-full hover-lift">
                 <Play className="w-5 h-5 mr-2" />
                 Join Now
               </Button>
-              <Button variant="outline" size="lg" className="border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white font-semibold px-8 py-4 rounded-full hover-lift">
-                <Download className="w-5 h-5 mr-2" />
-                Download App
+            </div>
+
+            {/* App Store Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-12">
+              <Button variant="outline" size="lg" className="border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white font-semibold px-6 py-3 rounded-full hover-lift">
+                <Download className="w-4 h-4 mr-2" />
+                Download for iOS
+              </Button>
+              <Button variant="outline" size="lg" className="border-2 border-pink-400 text-pink-400 hover:bg-pink-400 hover:text-white font-semibold px-6 py-3 rounded-full hover-lift">
+                <Download className="w-4 h-4 mr-2" />
+                Download for Android
+              </Button>
+              <Button variant="outline" size="lg" className="border-2 border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white font-semibold px-6 py-3 rounded-full hover-lift">
+                <Download className="w-4 h-4 mr-2" />
+                Download for Huawei
               </Button>
             </div>
 
-            <div className="flex items-center gap-8 mt-12 justify-center lg:justify-start">
+            <div className="flex items-center gap-8 justify-center lg:justify-start">
               <div className="text-center">
                 <div className="text-3xl font-bold text-white">50K+</div>
                 <div className="text-sm text-gray-400">Active Users</div>
@@ -77,10 +89,22 @@ const Hero = () => {
               </div>
               {/* Floating UI Elements */}
               <div className="absolute -top-4 -left-4 glass-card p-3 animate-float">
-                <Music className="w-6 h-6 text-purple-400" />
+                <Music className="w-6 h-6 text-purple-400 animate-pulse" />
               </div>
               <div className="absolute -bottom-4 -right-4 glass-card p-3 animate-float" style={{animationDelay: '1s'}}>
-                <Play className="w-6 h-6 text-pink-400" />
+                <Play className="w-6 h-6 text-pink-400 animate-pulse" />
+              </div>
+              <div className="absolute top-1/4 -right-8 glass-card p-3 animate-float" style={{animationDelay: '2s'}}>
+                <Star className="w-6 h-6 text-yellow-400 animate-pulse" />
+              </div>
+              <div className="absolute bottom-1/4 -left-8 glass-card p-3 animate-float" style={{animationDelay: '3s'}}>
+                <Headphones className="w-6 h-6 text-blue-400 animate-pulse" />
+              </div>
+              <div className="absolute top-1/2 -right-6 glass-card p-3 animate-float" style={{animationDelay: '4s'}}>
+                <Radio className="w-6 h-6 text-green-400 animate-pulse" />
+              </div>
+              <div className="absolute bottom-1/3 -left-6 glass-card p-3 animate-float" style={{animationDelay: '5s'}}>
+                <Zap className="w-6 h-6 text-orange-400 animate-pulse" />
               </div>
             </div>
           </div>

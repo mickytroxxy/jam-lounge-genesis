@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Music, Instagram, Twitter, Facebook, Youtube } from 'lucide-react';
+import { Music, Instagram, Twitter, Facebook, Youtube, Download } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -15,8 +15,11 @@ const Footer = () => {
               </div>
               <span className="text-2xl font-playfair font-bold neon-text">PlayMyJam</span>
             </div>
-            <p className="text-gray-300 mb-6 max-w-md">
+            <p className="text-gray-300 mb-4 max-w-md">
               The premium music social platform where luxury meets sound. Connect, share, and experience music like never before.
+            </p>
+            <p className="text-sm text-gray-400 mb-6">
+              A project by <span className="text-purple-400 font-semibold">Empire Digitals</span>
             </p>
             <div className="flex gap-4">
               <a href="#" className="w-10 h-10 rounded-lg bg-white/10 hover:bg-purple-600 flex items-center justify-center transition-colors duration-300">
@@ -49,7 +52,7 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-4">Support</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-purple-400 transition-colors">Contact Us</a></li>
+              <li><a href="mailto:playmyjam@empiredigitals.org" className="text-gray-300 hover:text-purple-400 transition-colors">Contact Us</a></li>
               <li><a href="#" className="text-gray-300 hover:text-purple-400 transition-colors">Help Center</a></li>
               <li><a href="#" className="text-gray-300 hover:text-purple-400 transition-colors">Privacy Policy</a></li>
               <li><a href="#" className="text-gray-300 hover:text-purple-400 transition-colors">Terms of Service</a></li>
@@ -60,11 +63,21 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2024 PlayMyJam. All rights reserved. Crafted with passion for music lovers.
+            © 2024 PlayMyJam by Empire Digitals. All rights reserved. Crafted with passion for music lovers.
           </p>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            <a href="#" className="text-gray-400 hover:text-purple-400 text-sm transition-colors">Download iOS</a>
-            <a href="#" className="text-gray-400 hover:text-purple-400 text-sm transition-colors">Download Android</a>
+          <div className="flex gap-4 mt-4 md:mt-0">
+            <a href="#" className="text-gray-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1">
+              <Download className="w-3 h-3" />
+              Download iOS
+            </a>
+            <a href="#" className="text-gray-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1">
+              <Download className="w-3 h-3" />
+              Download Android
+            </a>
+            <a href="#" className="text-gray-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1">
+              <Download className="w-3 h-3" />
+              Download Huawei
+            </a>
           </div>
         </div>
       </div>
