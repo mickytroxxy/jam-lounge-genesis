@@ -1,14 +1,13 @@
 [build]
   # Build command for your React app
   command = "npm run build"
-  
+
   # Directory where the built files will be located
   publish = "dist"
-  
-  # Node.js version to use
-  environment = { NODE_VERSION = "18" }
 
 [build.environment]
+  # Node.js version to use
+  NODE_VERSION = "18"
   # Ensure we're using Node.js, not Python
   NODE_ENV = "production"
 
