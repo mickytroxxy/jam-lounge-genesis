@@ -12,3 +12,28 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+# Sitemap
+Sitemap: https://playmyjam.empiredigitals.org/sitemap.xml
+
+# Allow access to legal pages
+Allow: /terms
+Allow: /privacy
+
+# Allow access to public assets
+Allow: /lovable-uploads/
+Allow: /*.css
+Allow: /*.js
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.gif
+Allow: /*.svg
+Allow: /*.ico
+
+# Block access to admin areas (when implemented)
+Disallow: /admin/
+Disallow: /api/private/
+
+# Crawl delay
+Crawl-delay: 1

@@ -1,0 +1,29 @@
+{
+  "name": "PlayMyJam - Music Sharing Platform",
+  "short_name": "PlayMyJam",
+  "description": "Revolutionary music sharing platform where creators retain full ownership. Upload music, connect with fans, bid for plays, and monetize your talent.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#222240",
+  "theme_color": "#222240",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "id": "com.playmyjam.app",
+  "icons": [
+    {
+      "src": "/lovable-uploads/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/lovable-uploads/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment", "social"],
+  "lang": "en",
+  "dir": "ltr"
+}

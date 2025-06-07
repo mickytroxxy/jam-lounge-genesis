@@ -77,7 +77,7 @@ const Hero = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-2xl opacity-30 scale-110"></div>
               <div className="relative">
                 <img 
-                  src="/lovable-uploads/screen3.png" 
+                  src="/lovable-uploads/screen7.png" 
                   alt="PlayMyJam App Preview" 
                   className="w-80 h-auto rounded-3xl shadow-2xl"
                 />

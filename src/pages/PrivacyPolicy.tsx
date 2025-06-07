@@ -210,10 +210,10 @@ const PrivacyPolicy = () => {
                 <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-400/20 rounded-xl p-6">
                   <div className="text-gray-200">
                     <p className="font-semibold text-white mb-2">PlayMyJam Privacy Team</p>
-                    <p>Email: privacy@playmyjam.com</p>
-                    <p>Address: [Your Business Address]</p>
-                    <p>Phone: [Your Contact Number]</p>
-                    <p>Data Protection Officer: dpo@playmyjam.com</p>
+                    <p>Email: privacy@playmyjam.empiredigitals.org</p>
+                    <p>Address: 3860 supercharger street, devland Soweto</p>
+                    <p>Phone: +27 105 10 2699</p>
+                    <p>Data Protection Officer: privacy@playmyjam.empiredigitals.org</p>
                   </div>
                 </div>
                 <p className="text-gray-300 mt-4">

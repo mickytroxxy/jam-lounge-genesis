@@ -239,9 +239,9 @@ const TermsAndConditions = () => {
                 <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-400/20 rounded-xl p-6">
                   <div className="text-gray-200">
                     <p className="font-semibold text-white mb-2">PlayMyJam Legal Team</p>
-                    <p>Email: legal@playmyjam.com</p>
-                    <p>Address: [Your Business Address]</p>
-                    <p>Phone: [Your Contact Number]</p>
+                    <p>Email: playmyjam@empiredigitals.org</p>
+                    <p>Address: 3860 supercharger street, devland Soweto</p>
+                    <p>Phone: +27 105 10 2699</p>
                   </div>
                 </div>
                 <div className="mt-6 pt-6 border-t border-white/10">
