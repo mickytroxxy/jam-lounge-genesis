@@ -25,5 +25,18 @@
   ],
   "categories": ["music", "entertainment", "social"],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "prefer_related_applications": true,
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=playmyjam.empiredigitals.org",
+      "id": "playmyjam.empiredigitals.org"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/us/app/playmyjam/id6746933088",
+      "id": "6746933088"
+    }
+  ]
 }

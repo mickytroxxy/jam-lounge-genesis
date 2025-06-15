@@ -67,15 +67,30 @@ const Footer = () => {
             © 2024 PlayMyJam by Empire Digitals. All rights reserved. Crafted with passion for music lovers.
           </p>
           <div className="flex gap-4 mt-4 md:mt-0">
-            <a href="#" className="text-gray-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1">
+            <a
+              href="https://apps.apple.com/us/app/playmyjam/id6746933088"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1"
+            >
               <Download className="w-3 h-3" />
               Download iOS
             </a>
-            <a href="#" className="text-gray-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1">
+            <a
+              href="https://play.google.com/store/apps/details?id=playmyjam.empiredigitals.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1"
+            >
               <Download className="w-3 h-3" />
               Download Android
             </a>
-            <a href="#" className="text-gray-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1">
+            <a
+              href="https://play.google.com/store/apps/details?id=playmyjam.empiredigitals.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1"
+            >
               <Download className="w-3 h-3" />
               Download Huawei
             </a>

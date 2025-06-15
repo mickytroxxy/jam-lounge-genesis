@@ -41,18 +41,39 @@ const Hero = () => {
 
             {/* App Store Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-12">
-              <Button variant="outline" size="lg" className="border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white font-semibold px-6 py-3 rounded-full hover-lift">
-                <Download className="w-4 h-4 mr-2" />
-                Download for iOS
-              </Button>
-              <Button variant="outline" size="lg" className="border-2 border-pink-400 text-pink-400 hover:bg-pink-400 hover:text-white font-semibold px-6 py-3 rounded-full hover-lift">
-                <Download className="w-4 h-4 mr-2" />
-                Download for Android
-              </Button>
-              <Button variant="outline" size="lg" className="border-2 border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white font-semibold px-6 py-3 rounded-full hover-lift">
-                <Download className="w-4 h-4 mr-2" />
-                Download for Huawei
-              </Button>
+              <a
+                href="https://apps.apple.com/us/app/playmyjam/id6746933088"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block"
+              >
+                <Button variant="outline" size="lg" className="border-2 border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white font-semibold px-6 py-3 rounded-full hover-lift w-full">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download for iOS
+                </Button>
+              </a>
+              <a
+                href="https://play.google.com/store/apps/details?id=playmyjam.empiredigitals.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block"
+              >
+                <Button variant="outline" size="lg" className="border-2 border-pink-400 text-pink-400 hover:bg-pink-400 hover:text-white font-semibold px-6 py-3 rounded-full hover-lift w-full">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download for Android
+                </Button>
+              </a>
+              <a
+                href="https://play.google.com/store/apps/details?id=playmyjam.empiredigitals.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block"
+              >
+                <Button variant="outline" size="lg" className="border-2 border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white font-semibold px-6 py-3 rounded-full hover-lift w-full">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download for Huawei
+                </Button>
+              </a>
             </div>
 
             <div className="flex items-center gap-8 justify-center lg:justify-start">
