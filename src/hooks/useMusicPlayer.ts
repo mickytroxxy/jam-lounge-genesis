@@ -132,16 +132,45 @@ export const useMusicPlayer = () => {
       }
     }
 
-    // Initialize audio elements with CORS support
+    // Initialize audio elements with CORS support and event listeners
     if (!deckAAudioRef.current) {
       deckAAudioRef.current = new Audio();
       deckAAudioRef.current.preload = 'metadata';
       deckAAudioRef.current.crossOrigin = 'anonymous'; // CORS enabled
+
+      // Add event listeners for proper state management
+      deckAAudioRef.current.addEventListener('ended', () => {
+        dispatch(setDeckAPlaying(false));
+        console.log('🔚 Deck A track ended');
+      });
+
+      deckAAudioRef.current.addEventListener('pause', () => {
+        dispatch(setDeckAPlaying(false));
+      });
+
+      deckAAudioRef.current.addEventListener('play', () => {
+        dispatch(setDeckAPlaying(true));
+      });
     }
+
     if (!deckBAudioRef.current) {
       deckBAudioRef.current = new Audio();
       deckBAudioRef.current.preload = 'metadata';
       deckBAudioRef.current.crossOrigin = 'anonymous'; // CORS enabled
+
+      // Add event listeners for proper state management
+      deckBAudioRef.current.addEventListener('ended', () => {
+        dispatch(setDeckBPlaying(false));
+        console.log('🔚 Deck B track ended');
+      });
+
+      deckBAudioRef.current.addEventListener('pause', () => {
+        dispatch(setDeckBPlaying(false));
+      });
+
+      deckBAudioRef.current.addEventListener('play', () => {
+        dispatch(setDeckBPlaying(true));
+      });
     }
 
     // Initialize master gain for Web Audio API (CORS enabled)
@@ -226,8 +255,23 @@ export const useMusicPlayer = () => {
     const delayDry = audioContextRef.current.createGain();
     delayDry.gain.value = 1;
 
-    // Create simple reverb using multiple delays
+    // Create reverb using convolver with impulse response
     deckAConvolverRef.current = audioContextRef.current.createConvolver();
+
+    // Generate a simple reverb impulse response
+    const sampleRate = audioContextRef.current.sampleRate;
+    const length = sampleRate * 2; // 2 seconds of reverb
+    const impulse = audioContextRef.current.createBuffer(2, length, sampleRate);
+
+    for (let channel = 0; channel < 2; channel++) {
+      const channelData = impulse.getChannelData(channel);
+      for (let i = 0; i < length; i++) {
+        const decay = Math.pow(1 - i / length, 2);
+        channelData[i] = (Math.random() * 2 - 1) * decay * 0.5;
+      }
+    }
+
+    deckAConvolverRef.current.buffer = impulse;
 
     // Create reverb wet/dry mix
     const reverbWet = audioContextRef.current.createGain();
@@ -454,8 +498,23 @@ export const useMusicPlayer = () => {
     const delayDry = audioContextRef.current.createGain();
     delayDry.gain.value = 1;
 
-    // Create simple reverb using multiple delays
+    // Create reverb using convolver with impulse response
     deckBConvolverRef.current = audioContextRef.current.createConvolver();
+
+    // Generate a simple reverb impulse response
+    const sampleRate = audioContextRef.current.sampleRate;
+    const length = sampleRate * 2; // 2 seconds of reverb
+    const impulse = audioContextRef.current.createBuffer(2, length, sampleRate);
+
+    for (let channel = 0; channel < 2; channel++) {
+      const channelData = impulse.getChannelData(channel);
+      for (let i = 0; i < length; i++) {
+        const decay = Math.pow(1 - i / length, 2);
+        channelData[i] = (Math.random() * 2 - 1) * decay * 0.5;
+      }
+    }
+
+    deckBConvolverRef.current.buffer = impulse;
 
     // Create reverb wet/dry mix
     const reverbWet = audioContextRef.current.createGain();
@@ -692,7 +751,7 @@ export const useMusicPlayer = () => {
     if (masterGainRef.current && audioContextRef.current) {
       const gainValue = safeVolume / 100;
       masterGainRef.current.gain.setValueAtTime(gainValue, audioContextRef.current.currentTime);
-      console.log('Master volume set via Web Audio:', safeVolume);
+      console.log('🔊 Master volume set via Web Audio:', safeVolume + '%', 'gain:', gainValue);
     } else {
       // Fallback: apply master volume to both HTML5 audio elements
       const deckAVolume = isFinite(musicPlayerState.deckA.volume) ? musicPlayerState.deckA.volume : 75;
@@ -735,14 +794,16 @@ export const useMusicPlayer = () => {
       const finalVolume = leftGain * (deckAVolume / 100) * (masterVolume / 100);
       const safeVolume = isFinite(finalVolume) ? Math.max(0, Math.min(1, finalVolume)) : 0;
       deckAAudioRef.current.volume = safeVolume;
-      console.log('Crossfader - Deck A volume:', safeVolume);
+      console.log('🎚️ Crossfader - Deck A volume:', safeVolume.toFixed(2));
     }
     if (deckBAudioRef.current) {
       const finalVolume = rightGain * (deckBVolume / 100) * (masterVolume / 100);
       const safeVolume = isFinite(finalVolume) ? Math.max(0, Math.min(1, finalVolume)) : 0;
       deckBAudioRef.current.volume = safeVolume;
-      console.log('Crossfader - Deck B volume:', safeVolume);
+      console.log('🎚️ Crossfader - Deck B volume:', safeVolume.toFixed(2));
     }
+
+    console.log('🎚️ Crossfader position:', safeValue + '%', 'A gain:', leftGain.toFixed(2), 'B gain:', rightGain.toFixed(2));
   }, [dispatch, musicPlayerState.deckA.volume, musicPlayerState.deckB.volume, musicPlayerState.masterVolume]);
 
   // EQ controls with real audio processing (CORS enabled)
@@ -778,7 +839,7 @@ export const useMusicPlayer = () => {
   }, [dispatch, initializeWebAudioForDeckA]);
 
   // Effect controls for Deck A
-  const updateDeckADelay = useCallback((delayTime: number, feedback: number = 0.3) => {
+  const updateDeckADelay = useCallback((delayTime: number) => {
     if (deckADelayRef.current && audioContextRef.current) {
       // Set delay time (0-1 seconds)
       deckADelayRef.current.delayTime.setValueAtTime(delayTime, audioContextRef.current.currentTime);
@@ -788,14 +849,19 @@ export const useMusicPlayer = () => {
       const dryGain = (deckADelayRef.current as any).dryGain;
 
       if (wetGain && dryGain) {
-        const wetLevel = delayTime > 0 ? 0.5 : 0;
-        const dryLevel = 1 - wetLevel * 0.5;
+        const wetLevel = delayTime > 0 ? 0.4 : 0; // 40% wet when delay is on
+        const dryLevel = 1 - wetLevel * 0.3; // Reduce dry slightly when wet is on
 
         wetGain.gain.setValueAtTime(wetLevel, audioContextRef.current.currentTime);
         dryGain.gain.setValueAtTime(dryLevel, audioContextRef.current.currentTime);
 
-        console.log('🎛️ Deck A Delay:', delayTime + 's', 'wet:', wetLevel);
+        console.log('🎛️ Deck A Delay:', delayTime + 's', 'wet:', wetLevel, 'dry:', dryLevel);
+        console.log('🔧 Delay nodes:', { wetGain: !!wetGain, dryGain: !!dryGain, delayNode: !!deckADelayRef.current });
+      } else {
+        console.warn('❌ Delay effect nodes not found');
       }
+    } else {
+      console.warn('❌ Delay effect not available - Web Audio not initialized');
     }
   }, []);
 
@@ -805,14 +871,205 @@ export const useMusicPlayer = () => {
       const dryGain = (deckAConvolverRef.current as any).dryGain;
 
       if (wetGain && dryGain) {
-        const wetLevel = reverbLevel / 100;
-        const dryLevel = 1 - wetLevel * 0.5;
+        const wetLevel = reverbLevel / 100 * 0.6; // Max 60% wet
+        const dryLevel = 1 - wetLevel * 0.3; // Reduce dry slightly when wet is on
 
         wetGain.gain.setValueAtTime(wetLevel, audioContextRef.current.currentTime);
         dryGain.gain.setValueAtTime(dryLevel, audioContextRef.current.currentTime);
 
-        console.log('🎛️ Deck A Reverb:', reverbLevel + '%');
+        console.log('🎛️ Deck A Reverb:', reverbLevel + '%', 'wet:', wetLevel, 'dry:', dryLevel);
+        console.log('🔧 Reverb nodes:', { wetGain: !!wetGain, dryGain: !!dryGain, convolver: !!deckAConvolverRef.current });
+      } else {
+        console.warn('❌ Reverb effect nodes not found');
       }
+    } else {
+      console.warn('❌ Reverb effect not available - Web Audio not initialized');
+    }
+  }, []);
+
+  // Sound Effects (DJ Sound FX)
+  const playSoundEffect = useCallback((effectType: 'siren' | 'scratch' | 'laser' | 'horn' | 'whoosh' | 'zap') => {
+    if (!audioContextRef.current || !masterGainRef.current) {
+      console.warn('❌ Sound effects not available - Web Audio not initialized');
+      return;
+    }
+
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+
+    // Create oscillator and gain for the effect
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    const filterNode = ctx.createBiquadFilter();
+
+    // Connect: oscillator -> filter -> gain -> master
+    oscillator.connect(filterNode);
+    filterNode.connect(gainNode);
+    gainNode.connect(masterGainRef.current);
+
+    switch (effectType) {
+      case 'siren':
+        // Police siren effect
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(800, now);
+        oscillator.frequency.linearRampToValueAtTime(1200, now + 0.5);
+        oscillator.frequency.linearRampToValueAtTime(800, now + 1.0);
+        oscillator.frequency.linearRampToValueAtTime(1200, now + 1.5);
+        oscillator.frequency.linearRampToValueAtTime(800, now + 2.0);
+
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + 1.9);
+        gainNode.gain.linearRampToValueAtTime(0, now + 2.0);
+
+        oscillator.start(now);
+        oscillator.stop(now + 2.0);
+        console.log('🚨 Siren effect played');
+        break;
+
+      case 'scratch':
+        // Vinyl scratch effect
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(100, now);
+        oscillator.frequency.exponentialRampToValueAtTime(2000, now + 0.1);
+        oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+
+        filterNode.type = 'highpass';
+        filterNode.frequency.setValueAtTime(200, now);
+
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.4, now + 0.01);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+
+        oscillator.start(now);
+        oscillator.stop(now + 0.3);
+        console.log('🎵 Scratch effect played');
+        break;
+
+      case 'laser':
+        // Laser zap effect
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(1000, now);
+        oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.5);
+
+        filterNode.type = 'lowpass';
+        filterNode.frequency.setValueAtTime(2000, now);
+        filterNode.frequency.linearRampToValueAtTime(500, now + 0.5);
+
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+        oscillator.start(now);
+        oscillator.stop(now + 0.5);
+        console.log('⚡ Laser effect played');
+        break;
+
+      case 'horn':
+        // Air horn effect
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(220, now);
+
+        filterNode.type = 'bandpass';
+        filterNode.frequency.setValueAtTime(1000, now);
+        filterNode.Q.setValueAtTime(5, now);
+
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.4, now + 0.05);
+        gainNode.gain.linearRampToValueAtTime(0.4, now + 0.8);
+        gainNode.gain.linearRampToValueAtTime(0, now + 1.0);
+
+        oscillator.start(now);
+        oscillator.stop(now + 1.0);
+        console.log('📯 Horn effect played');
+        break;
+
+      case 'whoosh':
+        // Whoosh sweep effect
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(2000, now);
+        oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.8);
+
+        filterNode.type = 'highpass';
+        filterNode.frequency.setValueAtTime(500, now);
+        filterNode.frequency.linearRampToValueAtTime(100, now + 0.8);
+
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.2, now + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.8);
+
+        oscillator.start(now);
+        oscillator.stop(now + 0.8);
+        console.log('💨 Whoosh effect played');
+        break;
+
+      case 'zap':
+        // Electric zap effect
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(800, now);
+        oscillator.frequency.linearRampToValueAtTime(400, now + 0.05);
+        oscillator.frequency.linearRampToValueAtTime(1200, now + 0.1);
+        oscillator.frequency.linearRampToValueAtTime(200, now + 0.2);
+
+        filterNode.type = 'bandpass';
+        filterNode.frequency.setValueAtTime(1500, now);
+        filterNode.Q.setValueAtTime(10, now);
+
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
+
+        oscillator.start(now);
+        oscillator.stop(now + 0.2);
+        console.log('⚡ Zap effect played');
+        break;
+    }
+  }, []);
+
+  // Effect controls for Deck B
+  const updateDeckBDelay = useCallback((delayTime: number) => {
+    if (deckBDelayRef.current && audioContextRef.current) {
+      // Set delay time (0-1 seconds)
+      deckBDelayRef.current.delayTime.setValueAtTime(delayTime, audioContextRef.current.currentTime);
+
+      // Set wet/dry mix based on delay time
+      const wetGain = (deckBDelayRef.current as any).wetGain;
+      const dryGain = (deckBDelayRef.current as any).dryGain;
+
+      if (wetGain && dryGain) {
+        const wetLevel = delayTime > 0 ? 0.4 : 0; // 40% wet when delay is on
+        const dryLevel = 1 - wetLevel * 0.3; // Reduce dry slightly when wet is on
+
+        wetGain.gain.setValueAtTime(wetLevel, audioContextRef.current.currentTime);
+        dryGain.gain.setValueAtTime(dryLevel, audioContextRef.current.currentTime);
+
+        console.log('🎛️ Deck B Delay:', delayTime + 's', 'wet:', wetLevel, 'dry:', dryLevel);
+      } else {
+        console.warn('❌ Deck B Delay effect nodes not found');
+      }
+    } else {
+      console.warn('❌ Deck B Delay effect not available - Web Audio not initialized');
+    }
+  }, []);
+
+  const updateDeckBReverb = useCallback((reverbLevel: number) => {
+    if (deckBConvolverRef.current && audioContextRef.current) {
+      const wetGain = (deckBConvolverRef.current as any).wetGain;
+      const dryGain = (deckBConvolverRef.current as any).dryGain;
+
+      if (wetGain && dryGain) {
+        const wetLevel = reverbLevel / 100 * 0.6; // Max 60% wet
+        const dryLevel = 1 - wetLevel * 0.3; // Reduce dry slightly when wet is on
+
+        wetGain.gain.setValueAtTime(wetLevel, audioContextRef.current.currentTime);
+        dryGain.gain.setValueAtTime(dryLevel, audioContextRef.current.currentTime);
+
+        console.log('🎛️ Deck B Reverb:', reverbLevel + '%', 'wet:', wetLevel, 'dry:', dryLevel);
+      } else {
+        console.warn('❌ Deck B Reverb effect nodes not found');
+      }
+    } else {
+      console.warn('❌ Deck B Reverb effect not available - Web Audio not initialized');
     }
   }, []);
 
@@ -907,11 +1164,26 @@ export const useMusicPlayer = () => {
 
   // BPM and sync
   const syncBPM = useCallback(() => {
-    const avgBPM = (musicPlayerState.bpmA + musicPlayerState.bpmB) / 2;
-    dispatch(setBPMA(avgBPM));
-    dispatch(setBPMB(avgBPM));
-    dispatch(setSynced(true));
-  }, [dispatch, musicPlayerState.bpmA, musicPlayerState.bpmB]);
+    const deckABPM = musicPlayerState.bpmA;
+    const deckBBPM = musicPlayerState.bpmB;
+
+    if (deckAAudioRef.current && deckBAudioRef.current && deckABPM && deckBBPM) {
+      // Calculate playback rate to sync BPMs
+      const targetBPM = deckABPM; // Use Deck A as master
+      const playbackRate = targetBPM / deckBBPM;
+
+      // Apply playback rate to Deck B to match Deck A's BPM
+      deckBAudioRef.current.playbackRate = Math.max(0.5, Math.min(2.0, playbackRate));
+
+      console.log(`🎵 BPM Sync: Deck A (${deckABPM} BPM) ← Deck B (${deckBBPM} BPM → ${targetBPM} BPM)`);
+      console.log(`📈 Deck B playback rate: ${playbackRate.toFixed(2)}x`);
+
+      // Update sync state
+      dispatch(setSynced(true));
+    } else {
+      console.warn('❌ Cannot sync BPM - missing audio elements or BPM data');
+    }
+  }, [musicPlayerState.bpmA, musicPlayerState.bpmB, dispatch]);
 
   // Reset functions
   const resetDeckAState = useCallback(() => {
@@ -934,6 +1206,23 @@ export const useMusicPlayer = () => {
     dispatch(setDeckBLoading(false));
     dispatch(setLoadingSongs(false));
   }, [dispatch]);
+
+  // Debug Web Audio state
+  const debugWebAudioState = useCallback(() => {
+    console.log('🔧 Web Audio Debug State:');
+    console.log('- Audio Context:', !!audioContextRef.current, audioContextRef.current?.state);
+    console.log('- Master Gain:', !!masterGainRef.current, masterGainRef.current?.gain.value);
+    console.log('- Deck A Source:', !!deckASourceRef.current);
+    console.log('- Deck B Source:', !!deckBSourceRef.current);
+    console.log('- Deck A Audio:', !!deckAAudioRef.current, deckAAudioRef.current?.volume);
+    console.log('- Deck B Audio:', !!deckBAudioRef.current, deckBAudioRef.current?.volume);
+    console.log('- Current State:', {
+      masterVolume: musicPlayerState.masterVolume,
+      crossfader: musicPlayerState.crossfader,
+      deckAVolume: musicPlayerState.deckA.volume,
+      deckBVolume: musicPlayerState.deckB.volume
+    });
+  }, [musicPlayerState]);
 
   // Test audio playback directly (for debugging)
   const testAudioPlayback = useCallback(async () => {
@@ -973,28 +1262,72 @@ export const useMusicPlayer = () => {
 
   // Quick effect toggles
   const toggleDeckAEcho = useCallback(() => {
-    const currentDelay = musicPlayerState.deckAEffects.delay;
-    const newDelay = currentDelay > 0 ? 0 : 30; // Toggle between 0 and 30%
-    updateDeckAEffects({ delay: newDelay });
-  }, [musicPlayerState.deckAEffects.delay, updateDeckAEffects]);
+    if (deckADelayRef.current && audioContextRef.current) {
+      const wetGain = (deckADelayRef.current as any).wetGain;
+      const currentWet = wetGain?.gain.value || 0;
+
+      if (currentWet > 0) {
+        // Turn off echo
+        updateDeckADelay(0);
+        console.log('🔇 Deck A Echo OFF');
+      } else {
+        // Turn on echo with 300ms delay
+        updateDeckADelay(0.3);
+        console.log('🔊 Deck A Echo ON (300ms delay)');
+      }
+    }
+  }, [updateDeckADelay]);
 
   const toggleDeckBEcho = useCallback(() => {
-    const currentDelay = musicPlayerState.deckBEffects.delay;
-    const newDelay = currentDelay > 0 ? 0 : 30;
-    updateDeckBEffects({ delay: newDelay });
-  }, [musicPlayerState.deckBEffects.delay, updateDeckBEffects]);
+    if (deckBDelayRef.current && audioContextRef.current) {
+      const wetGain = (deckBDelayRef.current as any).wetGain;
+      const currentWet = wetGain?.gain.value || 0;
+
+      if (currentWet > 0) {
+        // Turn off echo
+        updateDeckBDelay(0);
+        console.log('🔇 Deck B Echo OFF');
+      } else {
+        // Turn on echo with 300ms delay
+        updateDeckBDelay(0.3);
+        console.log('🔊 Deck B Echo ON (300ms delay)');
+      }
+    }
+  }, [updateDeckBDelay]);
 
   const toggleDeckAReverb = useCallback(() => {
-    const currentReverb = musicPlayerState.deckAEffects.reverb;
-    const newReverb = currentReverb > 0 ? 0 : 50; // Toggle between 0 and 50%
-    updateDeckAEffects({ reverb: newReverb });
-  }, [musicPlayerState.deckAEffects.reverb, updateDeckAEffects]);
+    if (deckAConvolverRef.current && audioContextRef.current) {
+      const wetGain = (deckAConvolverRef.current as any).wetGain;
+      const currentWet = wetGain?.gain.value || 0;
+
+      if (currentWet > 0) {
+        // Turn off reverb
+        updateDeckAReverb(0);
+        console.log('🔇 Deck A Reverb OFF');
+      } else {
+        // Turn on reverb at 50%
+        updateDeckAReverb(50);
+        console.log('🔊 Deck A Reverb ON (50% wet)');
+      }
+    }
+  }, [updateDeckAReverb]);
 
   const toggleDeckBReverb = useCallback(() => {
-    const currentReverb = musicPlayerState.deckBEffects.reverb;
-    const newReverb = currentReverb > 0 ? 0 : 50;
-    updateDeckBEffects({ reverb: newReverb });
-  }, [musicPlayerState.deckBEffects.reverb, updateDeckBEffects]);
+    if (deckBConvolverRef.current && audioContextRef.current) {
+      const wetGain = (deckBConvolverRef.current as any).wetGain;
+      const currentWet = wetGain?.gain.value || 0;
+
+      if (currentWet > 0) {
+        // Turn off reverb
+        updateDeckBReverb(0);
+        console.log('🔇 Deck B Reverb OFF');
+      } else {
+        // Turn on reverb at 50%
+        updateDeckBReverb(50);
+        console.log('🔊 Deck B Reverb ON (50% wet)');
+      }
+    }
+  }, [updateDeckBReverb]);
 
   // Log the final state before returning
   console.log('Final musicPlayerState before return:', musicPlayerState);
@@ -1081,6 +1414,9 @@ export const useMusicPlayer = () => {
     updateDeckAReverb,
     updateDeckAEffects,
     resetDeckAState,
+
+    // Sound Effects
+    playSoundEffect,
     
     // Deck B controls
     loadTrackToDeckB,
@@ -1089,6 +1425,8 @@ export const useMusicPlayer = () => {
     toggleDeckB,
     updateDeckBVolume,
     updateDeckBEQ,
+    updateDeckBDelay,
+    updateDeckBReverb,
     updateDeckBEffects,
     resetDeckBState,
     
@@ -1112,5 +1450,6 @@ export const useMusicPlayer = () => {
     // Debug/utility functions
     resetLoadingStates,
     testAudioPlayback,
+    debugWebAudioState,
   };
 };
