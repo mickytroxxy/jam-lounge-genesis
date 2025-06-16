@@ -21,7 +21,7 @@ const DJHeader: React.FC<DJHeaderProps> = () => {
           </Link>
           <div>
             <img
-              src="/src/assets/images/play.png"
+              src="/play.png"
               alt="PlayMyJam DJ"
               className="h-8 lg:h-10 w-auto"
             />
