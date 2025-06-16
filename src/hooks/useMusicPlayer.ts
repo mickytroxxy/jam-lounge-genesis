@@ -122,39 +122,35 @@ export const useMusicPlayer = () => {
     dispatch(setDeckBLoading(false));
     dispatch(setLoadingSongs(false));
 
-    // Initialize Audio Context for effects
+    // Initialize Audio Context for effects (CORS enabled)
     if (!audioContextRef.current) {
       try {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        console.log('Web Audio API initialized for effects');
+        console.log('🎵 Web Audio API initialized - CORS enabled');
       } catch (error) {
-        console.warn('Web Audio API not available:', error);
+        console.error('❌ Web Audio API not available:', error);
       }
     }
 
-    // Initialize audio elements
+    // Initialize audio elements with CORS support
     if (!deckAAudioRef.current) {
       deckAAudioRef.current = new Audio();
       deckAAudioRef.current.preload = 'metadata';
-      console.log('Deck A audio element created');
+      deckAAudioRef.current.crossOrigin = 'anonymous'; // CORS enabled
     }
     if (!deckBAudioRef.current) {
       deckBAudioRef.current = new Audio();
       deckBAudioRef.current.preload = 'metadata';
-      console.log('Deck B audio element created');
+      deckBAudioRef.current.crossOrigin = 'anonymous'; // CORS enabled
     }
 
-    // Initialize master gain for Web Audio API
+    // Initialize master gain for Web Audio API (CORS enabled)
     const initializeMasterGain = () => {
       if (!audioContextRef.current || masterGainRef.current) return;
 
-      try {
-        masterGainRef.current = audioContextRef.current.createGain();
-        masterGainRef.current.connect(audioContextRef.current.destination);
-        console.log('Master gain node created');
-      } catch (error) {
-        console.warn('Failed to create master gain node:', error);
-      }
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.connect(audioContextRef.current.destination);
+      console.log('🎛️ Master gain node created');
     };
 
     // Initialize Web Audio when user interacts
@@ -192,74 +188,93 @@ export const useMusicPlayer = () => {
 
 
 
-  // Initialize Web Audio nodes for Deck A with CORS fallback
+  // Initialize Web Audio nodes for Deck A (CORS enabled)
   const initializeWebAudioForDeckA = useCallback(() => {
     if (!audioContextRef.current || !deckAAudioRef.current || deckASourceRef.current) return;
 
-    try {
-      console.log('Attempting to initialize Web Audio for Deck A...');
+    // CORS is enabled - create full Web Audio chain
+    deckASourceRef.current = audioContextRef.current.createMediaElementSource(deckAAudioRef.current);
 
-      // Test if we can create MediaElementAudioSourceNode without breaking audio
-      const testSource = audioContextRef.current.createMediaElementSource(deckAAudioRef.current);
+    // Create EQ filters
+    deckAHighRef.current = audioContextRef.current.createBiquadFilter();
+    deckAHighRef.current.type = 'highshelf';
+    deckAHighRef.current.frequency.value = 8000;
+    deckAHighRef.current.gain.value = 0;
 
-      // If we get here, CORS is working, continue with full setup
-      deckASourceRef.current = testSource;
+    deckAMidRef.current = audioContextRef.current.createBiquadFilter();
+    deckAMidRef.current.type = 'peaking';
+    deckAMidRef.current.frequency.value = 1000;
+    deckAMidRef.current.Q.value = 1;
+    deckAMidRef.current.gain.value = 0;
 
-      // Create EQ filters
-      deckAHighRef.current = audioContextRef.current.createBiquadFilter();
-      deckAHighRef.current.type = 'highshelf';
-      deckAHighRef.current.frequency.value = 8000;
-      deckAHighRef.current.gain.value = 0;
+    deckALowRef.current = audioContextRef.current.createBiquadFilter();
+    deckALowRef.current.type = 'lowshelf';
+    deckALowRef.current.frequency.value = 200;
+    deckALowRef.current.gain.value = 0;
 
-      deckAMidRef.current = audioContextRef.current.createBiquadFilter();
-      deckAMidRef.current.type = 'peaking';
-      deckAMidRef.current.frequency.value = 1000;
-      deckAMidRef.current.Q.value = 1;
-      deckAMidRef.current.gain.value = 0;
+    // Create delay for echo with feedback
+    deckADelayRef.current = audioContextRef.current.createDelay(1.0);
+    deckADelayRef.current.delayTime.value = 0;
 
-      deckALowRef.current = audioContextRef.current.createBiquadFilter();
-      deckALowRef.current.type = 'lowshelf';
-      deckALowRef.current.frequency.value = 200;
-      deckALowRef.current.gain.value = 0;
+    // Create delay feedback gain
+    const delayFeedback = audioContextRef.current.createGain();
+    delayFeedback.gain.value = 0.3;
 
-      // Create delay for echo
-      deckADelayRef.current = audioContextRef.current.createDelay(1.0);
-      deckADelayRef.current.delayTime.value = 0;
+    // Create delay wet/dry mix
+    const delayWet = audioContextRef.current.createGain();
+    delayWet.gain.value = 0;
+    const delayDry = audioContextRef.current.createGain();
+    delayDry.gain.value = 1;
 
-      // Create convolver for reverb
-      deckAConvolverRef.current = audioContextRef.current.createConvolver();
+    // Create simple reverb using multiple delays
+    deckAConvolverRef.current = audioContextRef.current.createConvolver();
 
-      // Create gain node
-      deckAGainRef.current = audioContextRef.current.createGain();
+    // Create reverb wet/dry mix
+    const reverbWet = audioContextRef.current.createGain();
+    reverbWet.gain.value = 0;
+    const reverbDry = audioContextRef.current.createGain();
+    reverbDry.gain.value = 1;
 
-      // Connect audio chain: source -> EQ -> effects -> gain -> master
-      deckASourceRef.current
-        .connect(deckAHighRef.current)
-        .connect(deckAMidRef.current)
-        .connect(deckALowRef.current)
-        .connect(deckADelayRef.current)
-        .connect(deckAConvolverRef.current)
-        .connect(deckAGainRef.current)
-        .connect(masterGainRef.current!);
+    // Create gain node
+    deckAGainRef.current = audioContextRef.current.createGain();
 
-      console.log('Web Audio initialized successfully for Deck A');
-      return true; // Success
-    } catch (error) {
-      console.warn('Web Audio initialization failed for Deck A (likely CORS issue):', error);
+    // Connect EQ chain: source -> high -> mid -> low
+    deckASourceRef.current
+      .connect(deckAHighRef.current)
+      .connect(deckAMidRef.current)
+      .connect(deckALowRef.current);
 
-      // IMPORTANT: Don't clean up the source if it was created, as it disconnects audio
-      // Instead, just mark that Web Audio is not available
-      deckASourceRef.current = null;
-      deckAHighRef.current = null;
-      deckAMidRef.current = null;
-      deckALowRef.current = null;
-      deckADelayRef.current = null;
-      deckAConvolverRef.current = null;
-      deckAGainRef.current = null;
+    // Split signal for delay effect
+    deckALowRef.current.connect(delayDry);
+    deckALowRef.current.connect(deckADelayRef.current);
+    deckADelayRef.current.connect(delayWet);
+    deckADelayRef.current.connect(delayFeedback);
+    delayFeedback.connect(deckADelayRef.current);
 
-      console.log('Deck A will use HTML5 audio fallback (no effects available)');
-      return false; // Failed
-    }
+    // Mix delay signals
+    const delayMix = audioContextRef.current.createGain();
+    delayDry.connect(delayMix);
+    delayWet.connect(delayMix);
+
+    // Split for reverb effect
+    delayMix.connect(reverbDry);
+    delayMix.connect(deckAConvolverRef.current);
+    deckAConvolverRef.current.connect(reverbWet);
+
+    // Mix reverb signals and connect to gain
+    reverbDry.connect(deckAGainRef.current);
+    reverbWet.connect(deckAGainRef.current);
+
+    // Connect to master output
+    deckAGainRef.current.connect(masterGainRef.current!);
+
+    // Store references for effect controls
+    (deckADelayRef.current as any).wetGain = delayWet;
+    (deckADelayRef.current as any).dryGain = delayDry;
+    (deckAConvolverRef.current as any).wetGain = reverbWet;
+    (deckAConvolverRef.current as any).dryGain = reverbDry;
+
+    console.log('🎛️ Deck A Web Audio chain initialized');
   }, []);
 
   // Deck A controls
@@ -285,9 +300,10 @@ export const useMusicPlayer = () => {
       console.log('Setting audio source for Deck A:', audioUrl);
       deckAAudioRef.current.src = audioUrl;
 
-      // Don't initialize Web Audio during loading - let HTML5 audio work normally
-      // Web Audio will be initialized only when user tries to use EQ/effects
-      console.log('Track loaded successfully, Web Audio will be initialized on first EQ/effect use');
+      // Initialize Web Audio immediately (CORS enabled)
+      if (!deckASourceRef.current && audioContextRef.current && masterGainRef.current) {
+        initializeWebAudioForDeckA();
+      }
 
       const handleLoadedMetadata = () => {
         if (deckAAudioRef.current) {
@@ -362,54 +378,25 @@ export const useMusicPlayer = () => {
   }, [dispatch, initializeWebAudioForDeckA]);
 
   const playDeckA = useCallback(async () => {
-    console.log('playDeckA called');
-    console.log('deckAAudioRef.current:', deckAAudioRef.current);
-    console.log('musicPlayerState.deckA.currentTrack:', musicPlayerState.deckA.currentTrack);
-    console.log('deckAAudioRef.current?.src:', deckAAudioRef.current?.src);
-    console.log('deckAAudioRef.current?.readyState:', deckAAudioRef.current?.readyState);
-
     if (!deckAAudioRef.current || !musicPlayerState.deckA.currentTrack) {
-      console.warn('Cannot play Deck A - missing audio ref or track');
+      console.warn('❌ Cannot play Deck A - missing audio ref or track');
       return;
-    }
-
-    // Check if audio source is valid
-    if (!deckAAudioRef.current.src || deckAAudioRef.current.src === '') {
-      console.error('Cannot play Deck A - no audio source set');
-      return;
-    }
-
-    // If audio is not ready, try to load it first
-    if (deckAAudioRef.current.readyState < 2) {
-      console.warn('Deck A audio not ready (readyState:', deckAAudioRef.current.readyState, '), trying to load...');
-      try {
-        deckAAudioRef.current.load();
-        console.log('Called load() on Deck A audio element');
-      } catch (error) {
-        console.error('Error calling load() on Deck A:', error);
-      }
-
-      // For now, try to play anyway (some browsers allow this)
-      console.log('Attempting to play Deck A even though not fully ready...');
     }
 
     try {
-      // Make sure we're not already playing
       if (!deckAAudioRef.current.paused) {
-        console.log('Deck A already playing, pausing first');
         deckAAudioRef.current.pause();
       }
 
-      console.log('Attempting to play Deck A audio...');
       const playPromise = deckAAudioRef.current.play();
 
       if (playPromise !== undefined) {
         await playPromise;
         dispatch(setDeckAPlaying(true));
-        console.log('Deck A playing successfully');
+        console.log('▶️ Deck A playing');
       }
     } catch (error) {
-      console.error('Error playing Deck A:', error);
+      console.error('❌ Error playing Deck A:', error);
       dispatch(setDeckAPlaying(false));
     }
   }, [dispatch, musicPlayerState.deckA.currentTrack]);
@@ -429,68 +416,93 @@ export const useMusicPlayer = () => {
     }
   }, [musicPlayerState.deckA.isPlaying, playDeckA, pauseDeckA]);
 
-  // Initialize Web Audio nodes for Deck B with CORS fallback
+  // Initialize Web Audio nodes for Deck B (CORS enabled)
   const initializeWebAudioForDeckB = useCallback(() => {
     if (!audioContextRef.current || !deckBAudioRef.current || deckBSourceRef.current) return;
 
-    try {
-      console.log('Attempting to initialize Web Audio for Deck B...');
+    // CORS is enabled - create full Web Audio chain
+    deckBSourceRef.current = audioContextRef.current.createMediaElementSource(deckBAudioRef.current);
 
-      // Try to create MediaElementAudioSourceNode (requires CORS)
-      deckBSourceRef.current = audioContextRef.current.createMediaElementSource(deckBAudioRef.current);
+    // Create EQ filters
+    deckBHighRef.current = audioContextRef.current.createBiquadFilter();
+    deckBHighRef.current.type = 'highshelf';
+    deckBHighRef.current.frequency.value = 8000;
+    deckBHighRef.current.gain.value = 0;
 
-      // Create EQ filters
-      deckBHighRef.current = audioContextRef.current.createBiquadFilter();
-      deckBHighRef.current.type = 'highshelf';
-      deckBHighRef.current.frequency.value = 8000;
-      deckBHighRef.current.gain.value = 0;
+    deckBMidRef.current = audioContextRef.current.createBiquadFilter();
+    deckBMidRef.current.type = 'peaking';
+    deckBMidRef.current.frequency.value = 1000;
+    deckBMidRef.current.Q.value = 1;
+    deckBMidRef.current.gain.value = 0;
 
-      deckBMidRef.current = audioContextRef.current.createBiquadFilter();
-      deckBMidRef.current.type = 'peaking';
-      deckBMidRef.current.frequency.value = 1000;
-      deckBMidRef.current.Q.value = 1;
-      deckBMidRef.current.gain.value = 0;
+    deckBLowRef.current = audioContextRef.current.createBiquadFilter();
+    deckBLowRef.current.type = 'lowshelf';
+    deckBLowRef.current.frequency.value = 200;
+    deckBLowRef.current.gain.value = 0;
 
-      deckBLowRef.current = audioContextRef.current.createBiquadFilter();
-      deckBLowRef.current.type = 'lowshelf';
-      deckBLowRef.current.frequency.value = 200;
-      deckBLowRef.current.gain.value = 0;
+    // Create delay for echo with feedback
+    deckBDelayRef.current = audioContextRef.current.createDelay(1.0);
+    deckBDelayRef.current.delayTime.value = 0;
 
-      // Create delay for echo
-      deckBDelayRef.current = audioContextRef.current.createDelay(1.0);
-      deckBDelayRef.current.delayTime.value = 0;
+    // Create delay feedback gain
+    const delayFeedback = audioContextRef.current.createGain();
+    delayFeedback.gain.value = 0.3;
 
-      // Create convolver for reverb
-      deckBConvolverRef.current = audioContextRef.current.createConvolver();
+    // Create delay wet/dry mix
+    const delayWet = audioContextRef.current.createGain();
+    delayWet.gain.value = 0;
+    const delayDry = audioContextRef.current.createGain();
+    delayDry.gain.value = 1;
 
-      // Create gain node
-      deckBGainRef.current = audioContextRef.current.createGain();
+    // Create simple reverb using multiple delays
+    deckBConvolverRef.current = audioContextRef.current.createConvolver();
 
-      // Connect audio chain: source -> EQ -> effects -> gain -> master
-      deckBSourceRef.current
-        .connect(deckBHighRef.current)
-        .connect(deckBMidRef.current)
-        .connect(deckBLowRef.current)
-        .connect(deckBDelayRef.current)
-        .connect(deckBConvolverRef.current)
-        .connect(deckBGainRef.current)
-        .connect(masterGainRef.current!);
+    // Create reverb wet/dry mix
+    const reverbWet = audioContextRef.current.createGain();
+    reverbWet.gain.value = 0;
+    const reverbDry = audioContextRef.current.createGain();
+    reverbDry.gain.value = 1;
 
-      console.log('Web Audio initialized successfully for Deck B');
-    } catch (error) {
-      console.warn('Web Audio initialization failed for Deck B (likely CORS issue):', error);
-      // Clean up partial initialization
-      deckBSourceRef.current = null;
-      deckBHighRef.current = null;
-      deckBMidRef.current = null;
-      deckBLowRef.current = null;
-      deckBDelayRef.current = null;
-      deckBConvolverRef.current = null;
-      deckBGainRef.current = null;
+    // Create gain node
+    deckBGainRef.current = audioContextRef.current.createGain();
 
-      // Audio will continue to work via HTML5 audio element
-      console.log('Deck B will use HTML5 audio fallback (no effects available)');
-    }
+    // Connect EQ chain: source -> high -> mid -> low
+    deckBSourceRef.current
+      .connect(deckBHighRef.current)
+      .connect(deckBMidRef.current)
+      .connect(deckBLowRef.current);
+
+    // Split signal for delay effect
+    deckBLowRef.current.connect(delayDry);
+    deckBLowRef.current.connect(deckBDelayRef.current);
+    deckBDelayRef.current.connect(delayWet);
+    deckBDelayRef.current.connect(delayFeedback);
+    delayFeedback.connect(deckBDelayRef.current);
+
+    // Mix delay signals
+    const delayMix = audioContextRef.current.createGain();
+    delayDry.connect(delayMix);
+    delayWet.connect(delayMix);
+
+    // Split for reverb effect
+    delayMix.connect(reverbDry);
+    delayMix.connect(deckBConvolverRef.current);
+    deckBConvolverRef.current.connect(reverbWet);
+
+    // Mix reverb signals and connect to gain
+    reverbDry.connect(deckBGainRef.current);
+    reverbWet.connect(deckBGainRef.current);
+
+    // Connect to master output
+    deckBGainRef.current.connect(masterGainRef.current!);
+
+    // Store references for effect controls
+    (deckBDelayRef.current as any).wetGain = delayWet;
+    (deckBDelayRef.current as any).dryGain = delayDry;
+    (deckBConvolverRef.current as any).wetGain = reverbWet;
+    (deckBConvolverRef.current as any).dryGain = reverbDry;
+
+    console.log('🎛️ Deck B Web Audio chain initialized');
   }, []);
 
   // Deck B controls
@@ -507,9 +519,10 @@ export const useMusicPlayer = () => {
       console.log('Deck B audio URL:', audioUrl);
       deckBAudioRef.current.src = audioUrl;
 
-      // Don't initialize Web Audio during loading - let HTML5 audio work normally
-      // Web Audio will be initialized only when user tries to use EQ/effects
-      console.log('Track loaded successfully, Web Audio will be initialized on first EQ/effect use');
+      // Initialize Web Audio immediately (CORS enabled)
+      if (!deckBSourceRef.current && audioContextRef.current && masterGainRef.current) {
+        initializeWebAudioForDeckB();
+      }
 
       const handleLoadedMetadata = () => {
         if (deckBAudioRef.current) {
@@ -633,24 +646,20 @@ export const useMusicPlayer = () => {
     }
   }, [musicPlayerState.deckB.isPlaying, playDeckB, pauseDeckB]);
 
-  // Volume controls (HTML5 primary, Web Audio secondary)
+  // Volume controls (Web Audio with HTML5 sync)
   const updateDeckAVolume = useCallback((volume: number) => {
-    // Validate volume value
     const safeVolume = isFinite(volume) ? Math.max(0, Math.min(100, volume)) : 75;
     dispatch(setDeckAVolume(safeVolume));
 
-    // Always update HTML5 volume for basic functionality and crossfading
-    if (deckAAudioRef.current) {
-      const htmlVolume = safeVolume / 100;
-      deckAAudioRef.current.volume = htmlVolume;
-      console.log('Deck A volume set via HTML5:', safeVolume, 'html volume:', htmlVolume);
-    }
-
-    // Also update Web Audio gain if available (for effects processing)
+    // Use Web Audio gain for precise control
     if (deckAGainRef.current && audioContextRef.current) {
       const gainValue = safeVolume / 100;
       deckAGainRef.current.gain.setValueAtTime(gainValue, audioContextRef.current.currentTime);
-      console.log('Deck A Web Audio gain also updated:', safeVolume);
+    }
+
+    // Keep HTML5 volume in sync for crossfader compatibility
+    if (deckAAudioRef.current) {
+      deckAAudioRef.current.volume = safeVolume / 100;
     }
   }, [dispatch]);
 
@@ -736,43 +745,76 @@ export const useMusicPlayer = () => {
     }
   }, [dispatch, musicPlayerState.deckA.volume, musicPlayerState.deckB.volume, musicPlayerState.masterVolume]);
 
-  // EQ controls with real audio processing
+  // EQ controls with real audio processing (CORS enabled)
   const updateDeckAEQ = useCallback((eq: { high?: number; mid?: number; low?: number }) => {
     dispatch(setDeckAEQ(eq));
 
-    // Try to initialize Web Audio if not already done
+    // Initialize Web Audio if not already done (CORS enabled)
     if (!deckASourceRef.current && deckAAudioRef.current && audioContextRef.current && masterGainRef.current) {
-      console.log('Initializing Web Audio for Deck A (triggered by EQ use)...');
-      const success = initializeWebAudioForDeckA();
-      if (!success) {
-        console.warn('Web Audio not available for Deck A - EQ will not work');
-        return;
-      }
+      initializeWebAudioForDeckA();
     }
 
     // Apply EQ to Web Audio API nodes
     if (eq.high !== undefined && deckAHighRef.current && audioContextRef.current) {
-      // Convert 0-100 range to -12dB to +12dB with validation
       const safeHigh = isFinite(eq.high) ? Math.max(0, Math.min(100, eq.high)) : 50;
       const gainValue = ((safeHigh - 50) / 50) * 12;
       deckAHighRef.current.gain.setValueAtTime(gainValue, audioContextRef.current.currentTime);
-      console.log('Deck A High EQ:', safeHigh, 'gain:', gainValue);
+      console.log('🎛️ Deck A High EQ:', gainValue + 'dB');
     }
 
     if (eq.mid !== undefined && deckAMidRef.current && audioContextRef.current) {
       const safeMid = isFinite(eq.mid) ? Math.max(0, Math.min(100, eq.mid)) : 50;
       const gainValue = ((safeMid - 50) / 50) * 12;
       deckAMidRef.current.gain.setValueAtTime(gainValue, audioContextRef.current.currentTime);
-      console.log('Deck A Mid EQ:', safeMid, 'gain:', gainValue);
+      console.log('🎛️ Deck A Mid EQ:', gainValue + 'dB');
     }
 
     if (eq.low !== undefined && deckALowRef.current && audioContextRef.current) {
       const safeLow = isFinite(eq.low) ? Math.max(0, Math.min(100, eq.low)) : 50;
       const gainValue = ((safeLow - 50) / 50) * 12;
       deckALowRef.current.gain.setValueAtTime(gainValue, audioContextRef.current.currentTime);
-      console.log('Deck A Low EQ:', safeLow, 'gain:', gainValue);
+      console.log('🎛️ Deck A Low EQ:', gainValue + 'dB');
     }
   }, [dispatch, initializeWebAudioForDeckA]);
+
+  // Effect controls for Deck A
+  const updateDeckADelay = useCallback((delayTime: number, feedback: number = 0.3) => {
+    if (deckADelayRef.current && audioContextRef.current) {
+      // Set delay time (0-1 seconds)
+      deckADelayRef.current.delayTime.setValueAtTime(delayTime, audioContextRef.current.currentTime);
+
+      // Set wet/dry mix based on delay time
+      const wetGain = (deckADelayRef.current as any).wetGain;
+      const dryGain = (deckADelayRef.current as any).dryGain;
+
+      if (wetGain && dryGain) {
+        const wetLevel = delayTime > 0 ? 0.5 : 0;
+        const dryLevel = 1 - wetLevel * 0.5;
+
+        wetGain.gain.setValueAtTime(wetLevel, audioContextRef.current.currentTime);
+        dryGain.gain.setValueAtTime(dryLevel, audioContextRef.current.currentTime);
+
+        console.log('🎛️ Deck A Delay:', delayTime + 's', 'wet:', wetLevel);
+      }
+    }
+  }, []);
+
+  const updateDeckAReverb = useCallback((reverbLevel: number) => {
+    if (deckAConvolverRef.current && audioContextRef.current) {
+      const wetGain = (deckAConvolverRef.current as any).wetGain;
+      const dryGain = (deckAConvolverRef.current as any).dryGain;
+
+      if (wetGain && dryGain) {
+        const wetLevel = reverbLevel / 100;
+        const dryLevel = 1 - wetLevel * 0.5;
+
+        wetGain.gain.setValueAtTime(wetLevel, audioContextRef.current.currentTime);
+        dryGain.gain.setValueAtTime(dryLevel, audioContextRef.current.currentTime);
+
+        console.log('🎛️ Deck A Reverb:', reverbLevel + '%');
+      }
+    }
+  }, []);
 
   const updateDeckBEQ = useCallback((eq: { high?: number; mid?: number; low?: number }) => {
     dispatch(setDeckBEQ(eq));
@@ -1035,6 +1077,8 @@ export const useMusicPlayer = () => {
     toggleDeckA,
     updateDeckAVolume,
     updateDeckAEQ,
+    updateDeckADelay,
+    updateDeckAReverb,
     updateDeckAEffects,
     resetDeckAState,
     
