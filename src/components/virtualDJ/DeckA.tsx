@@ -124,7 +124,7 @@ const DeckA: React.FC<DeckAProps> = ({
               min="0"
               max="100"
               value={deckAEQ.high}
-              onChange={(e) => updateDeckAEQ({ high: Number(e.target.value) })}
+              onChange={(e) => updateDeckAEQ({ ...deckAEQ, high: Number(e.target.value) })}
               className="w-full h-1 bg-gray-700 rounded slider-purple"
             />
           </div>
@@ -135,7 +135,7 @@ const DeckA: React.FC<DeckAProps> = ({
               min="0"
               max="100"
               value={deckAEQ.mid}
-              onChange={(e) => updateDeckAEQ({ mid: Number(e.target.value) })}
+              onChange={(e) => updateDeckAEQ({ ...deckAEQ, mid: Number(e.target.value) })}
               className="w-full h-1 bg-gray-700 rounded slider-purple"
             />
           </div>
@@ -146,7 +146,7 @@ const DeckA: React.FC<DeckAProps> = ({
               min="0"
               max="100"
               value={deckAEQ.low}
-              onChange={(e) => updateDeckAEQ({ low: Number(e.target.value) })}
+              onChange={(e) => updateDeckAEQ({ ...deckAEQ, low: Number(e.target.value) })}
               className="w-full h-1 bg-gray-700 rounded slider-purple"
             />
           </div>

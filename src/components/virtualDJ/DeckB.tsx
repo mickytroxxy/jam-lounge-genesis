@@ -130,7 +130,7 @@ const DeckB: React.FC<DeckBProps> = ({
               min="0"
               max="100"
               value={deckBEQ.high}
-              onChange={(e) => updateDeckBEQ({ high: Number(e.target.value) })}
+              onChange={(e) => updateDeckBEQ({ ...deckBEQ, high: Number(e.target.value) })}
               className="w-full h-1 bg-gray-700 rounded slider-blue"
             />
           </div>
@@ -141,7 +141,7 @@ const DeckB: React.FC<DeckBProps> = ({
               min="0"
               max="100"
               value={deckBEQ.mid}
-              onChange={(e) => updateDeckBEQ({ mid: Number(e.target.value) })}
+              onChange={(e) => updateDeckBEQ({ ...deckBEQ, mid: Number(e.target.value) })}
               className="w-full h-1 bg-gray-700 rounded slider-blue"
             />
           </div>
@@ -152,7 +152,7 @@ const DeckB: React.FC<DeckBProps> = ({
               min="0"
               max="100"
               value={deckBEQ.low}
-              onChange={(e) => updateDeckBEQ({ low: Number(e.target.value) })}
+              onChange={(e) => updateDeckBEQ({ ...deckBEQ, low: Number(e.target.value) })}
               className="w-full h-1 bg-gray-700 rounded slider-blue"
             />
           </div>

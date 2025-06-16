@@ -60,7 +60,16 @@ export const getDJSongsj = async (ownerId: string): Promise<any[]> => {
     return [];
   }
 };
-
+export const updateData = async (tableName: string, docId: string, obj: { field: string; value: any }): Promise<boolean> => {
+  try {
+    const docRef = doc(db, tableName, docId);
+    await updateDoc(docRef, { [obj.field]: obj.value });
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+};
 export const getDJSongs = async (ownerId:string,type:'ALL' | 'ACTIVE',cb:(...args:any) => void) => {
 
   try {

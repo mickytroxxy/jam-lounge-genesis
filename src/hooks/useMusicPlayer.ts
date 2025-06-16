@@ -43,6 +43,8 @@ export const useMusicPlayer = () => {
     return state.musicPlayer;
   });
 
+
+
   // Audio element refs for both decks
   const deckAAudioRef = useRef<HTMLAudioElement | null>(null);
   const deckBAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -437,7 +439,7 @@ export const useMusicPlayer = () => {
       if (playPromise !== undefined) {
         await playPromise;
         dispatch(setDeckAPlaying(true));
-        console.log('▶️ Deck A playing');
+        console.log('▶️ Deck A playing:', musicPlayerState.deckA.currentTrack.title);
       }
     } catch (error) {
       console.error('❌ Error playing Deck A:', error);
@@ -446,11 +448,22 @@ export const useMusicPlayer = () => {
   }, [dispatch, musicPlayerState.deckA.currentTrack]);
 
   const pauseDeckA = useCallback(() => {
-    if (deckAAudioRef.current) {
+    if (deckAAudioRef.current && musicPlayerState.deckA.currentTrack) {
       deckAAudioRef.current.pause();
       dispatch(setDeckAPlaying(false));
+      console.log('⏸️ Deck A paused:', musicPlayerState.deckA.currentTrack.title);
     }
-  }, [dispatch]);
+  }, [dispatch, musicPlayerState.deckA.currentTrack]);
+
+  const stopDeckA = useCallback(() => {
+    if (deckAAudioRef.current && musicPlayerState.deckA.currentTrack) {
+      deckAAudioRef.current.pause();
+      deckAAudioRef.current.currentTime = 0;
+      dispatch(setDeckAPlaying(false));
+      dispatch(setDeckAPosition(0));
+      console.log('⏹️ Deck A stopped:', musicPlayerState.deckA.currentTrack.title);
+    }
+  }, [dispatch, musicPlayerState.deckA.currentTrack]);
 
   const toggleDeckA = useCallback(() => {
     if (musicPlayerState.deckA.isPlaying) {
@@ -682,7 +695,7 @@ export const useMusicPlayer = () => {
       if (playPromise !== undefined) {
         await playPromise;
         dispatch(setDeckBPlaying(true));
-        console.log('Deck B playing successfully');
+        console.log('▶️ Deck B playing:', musicPlayerState.deckB.currentTrack.title);
       }
     } catch (error) {
       console.error('Error playing Deck B:', error);
@@ -691,11 +704,22 @@ export const useMusicPlayer = () => {
   }, [dispatch, musicPlayerState.deckB.currentTrack]);
 
   const pauseDeckB = useCallback(() => {
-    if (deckBAudioRef.current) {
+    if (deckBAudioRef.current && musicPlayerState.deckB.currentTrack) {
       deckBAudioRef.current.pause();
       dispatch(setDeckBPlaying(false));
+      console.log('⏸️ Deck B paused:', musicPlayerState.deckB.currentTrack.title);
     }
-  }, [dispatch]);
+  }, [dispatch, musicPlayerState.deckB.currentTrack]);
+
+  const stopDeckB = useCallback(() => {
+    if (deckBAudioRef.current && musicPlayerState.deckB.currentTrack) {
+      deckBAudioRef.current.pause();
+      deckBAudioRef.current.currentTime = 0;
+      dispatch(setDeckBPlaying(false));
+      dispatch(setDeckBPosition(0));
+      console.log('⏹️ Deck B stopped:', musicPlayerState.deckB.currentTrack.title);
+    }
+  }, [dispatch, musicPlayerState.deckB.currentTrack]);
 
   const toggleDeckB = useCallback(() => {
     if (musicPlayerState.deckB.isPlaying) {
@@ -1076,6 +1100,11 @@ export const useMusicPlayer = () => {
   const updateDeckBEQ = useCallback((eq: { high?: number; mid?: number; low?: number }) => {
     dispatch(setDeckBEQ(eq));
 
+    // Initialize Web Audio if not already done (CORS enabled)
+    if (!deckBSourceRef.current && deckBAudioRef.current && audioContextRef.current && masterGainRef.current) {
+      initializeWebAudioForDeckB();
+    }
+
     // Apply EQ to Web Audio API nodes
     if (eq.high !== undefined && deckBHighRef.current && audioContextRef.current) {
       // Convert 0-100 range to -12dB to +12dB with validation
@@ -1098,7 +1127,7 @@ export const useMusicPlayer = () => {
       deckBLowRef.current.gain.setValueAtTime(gainValue, audioContextRef.current.currentTime);
       console.log('Deck B Low EQ:', safeLow, 'gain:', gainValue);
     }
-  }, [dispatch]);
+  }, [dispatch, initializeWebAudioForDeckB]);
 
   // Effects controls with real audio processing
   const updateDeckAEffects = useCallback((effects: { delay?: number; reverb?: number; filter?: number }) => {
@@ -1407,6 +1436,7 @@ export const useMusicPlayer = () => {
     loadTrackToDeckA,
     playDeckA,
     pauseDeckA,
+    stopDeckA,
     toggleDeckA,
     updateDeckAVolume,
     updateDeckAEQ,
@@ -1422,6 +1452,7 @@ export const useMusicPlayer = () => {
     loadTrackToDeckB,
     playDeckB,
     pauseDeckB,
+    stopDeckB,
     toggleDeckB,
     updateDeckBVolume,
     updateDeckBEQ,

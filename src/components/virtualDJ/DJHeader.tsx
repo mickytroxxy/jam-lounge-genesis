@@ -1,15 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Mic } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, User, Wallet } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { currencyFormatter } from '@/utils';
 
 interface DJHeaderProps {
-  isRecording: boolean;
-  toggleRecording: () => void;
+  // Remove recording props as we're replacing with DJ info
 }
 
-const DJHeader: React.FC<DJHeaderProps> = ({ isRecording, toggleRecording }) => {
+const DJHeader: React.FC<DJHeaderProps> = () => {
+  const { user, isAuthenticated } = useAuth();
+
   return (
     <div className="container mx-auto px-6 py-3">
       <div className="flex items-center justify-between mb-4">
@@ -24,21 +25,52 @@ const DJHeader: React.FC<DJHeaderProps> = ({ isRecording, toggleRecording }) => 
             <p className="text-gray-300 text-sm">Bid-to-Play DJ Experience</p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3">
-          <Badge variant="outline" className="border-green-400 text-green-400 text-sm">
-            <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-            Live
-          </Badge>
-          <Button
-            onClick={toggleRecording}
-            size="sm"
-            className={`${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-600 hover:bg-gray-700'} text-white`}
-          >
-            <Mic className="w-4 h-4 mr-1" />
-            {isRecording ? 'Recording' : 'Record'}
-          </Button>
-        </div>
+
+        {/* DJ Info Section */}
+        {isAuthenticated && user ? (
+          <div className="flex items-center gap-4">
+            {/* Balance */}
+            <div className="glass-card px-4 py-2 flex items-center gap-2">
+              <Wallet className="w-4 h-4 text-green-400" />
+              <div className="text-right">
+                <p className="text-green-400 font-semibold text-sm">
+                  {currencyFormatter(user.balance || 0)}
+                </p>
+                <p className="text-gray-400 text-xs">Balance</p>
+              </div>
+            </div>
+
+            {/* DJ Profile */}
+            <div className="glass-card px-4 py-2 flex items-center gap-3">
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.fname || 'DJ'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-5 h-5 text-white" />
+                )}
+              </div>
+
+              {/* DJ Info */}
+              <div className="text-left">
+                <p className="text-white font-semibold text-sm">
+                  {user.djInfo?.djName || user.fname || 'DJ'}
+                </p>
+                <p className="text-gray-400 text-xs capitalize">
+                  {user.role === 'dj' ? 'DJ' : user.role || 'User'}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="glass-card px-4 py-2">
+            <p className="text-gray-400 text-sm">Please login to continue</p>
+          </div>
+        )}
       </div>
     </div>
   );

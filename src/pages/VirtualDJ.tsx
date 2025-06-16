@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
+import { useAudioLogic } from '@/hooks/useAudioLogic';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginModal from '@/components/LoginModal';
 
@@ -23,7 +24,6 @@ const VirtualDJ = () => {
     deckBEQ,
     djSongs,
     isLoadingSongs,
-    isRecording,
     bpmA,
     bpmB,
     isSynced,
@@ -62,6 +62,40 @@ const VirtualDJ = () => {
     playSoundEffect,
   } = useMusicPlayer();
 
+  // Audio logic for song status updates
+  const { handleSongUpdate } = useAudioLogic(djSongs || []);
+
+  // Enhanced toggle functions that update song status
+  const enhancedToggleDeckA = async () => {
+    const wasPlaying = deckA?.isPlaying;
+    const currentTrack = deckA?.currentTrack;
+
+    // Call the original toggle function
+    toggleDeckA();
+
+    // Update song status if there's a current track
+    if (currentTrack) {
+      const action = wasPlaying ? 'pause' : 'play';
+      const position = deckA?.position || 0;
+      await handleSongUpdate(currentTrack, action, position);
+    }
+  };
+
+  const enhancedToggleDeckB = async () => {
+    const wasPlaying = deckB?.isPlaying;
+    const currentTrack = deckB?.currentTrack;
+
+    // Call the original toggle function
+    toggleDeckB();
+
+    // Update song status if there's a current track
+    if (currentTrack) {
+      const action = wasPlaying ? 'pause' : 'play';
+      const position = deckB?.position || 0;
+      await handleSongUpdate(currentTrack, action, position);
+    }
+  };
+
   // Show login modal when visiting DJ page if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
@@ -96,10 +130,7 @@ const VirtualDJ = () => {
 
         <div className="relative z-10">
           {/* Header */}
-          <DJHeader 
-            isRecording={isRecording}
-            toggleRecording={toggleRecording}
-          />
+          <DJHeader />
 
           {/* Main DJ Interface */}
           <div className="container mx-auto px-6">
@@ -111,7 +142,7 @@ const VirtualDJ = () => {
                 bpmA={bpmA}
                 deckAEQ={deckAEQ}
                 deckAEffects={deckAEffects}
-                toggleDeckA={toggleDeckA}
+                toggleDeckA={enhancedToggleDeckA}
                 updateDeckAVolume={updateDeckAVolume}
                 updateDeckAEQ={updateDeckAEQ}
                 toggleDeckAReverb={toggleDeckAReverb}
@@ -143,7 +174,7 @@ const VirtualDJ = () => {
                 bpmB={bpmB}
                 deckBEQ={deckBEQ}
                 deckBEffects={deckBEffects}
-                toggleDeckB={toggleDeckB}
+                toggleDeckB={enhancedToggleDeckB}
                 updateDeckBVolume={updateDeckBVolume}
                 updateDeckBEQ={updateDeckBEQ}
                 updateDeckBEffects={updateDeckBEffects}
