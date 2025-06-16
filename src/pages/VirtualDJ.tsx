@@ -80,6 +80,8 @@ const VirtualDJ = () => {
   // Audio logic for song status updates
   const { handleSongUpdate } = useAudioLogic(djSongs || []);
 
+
+
   // Enhanced toggle functions that update song status
   const enhancedToggleDeckA = async () => {
     const wasPlaying = deckA?.isPlaying;
