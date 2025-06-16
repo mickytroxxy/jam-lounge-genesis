@@ -87,30 +87,24 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
 
   return (
     <div className="glass-card p-4 animate-fade-in-up font-montserrat-light" style={{animationDelay: '0.5s'}}>
+      {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <Music className="w-5 h-5 text-white" />
         <h3 className="text-lg font-montserrat-bold text-white">
           Music <span className="neon-text">Library</span>
         </h3>
-
       </div>
-      <div className="mt-4 pt-3 border-t border-green-700 mb-4">
-        <p className="text-xm text-gray-400">
+
+      {/* Instructions */}
+      <div className="pt-3 border-t border-green-700 mb-4">
+        <p className="text-xs text-gray-400 font-montserrat-light">
           Click A or B to load to deck
         </p>
       </div>
-      {/* Search Bar */}
-      {/* <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search tracks..."
-          className="w-full pl-10 pr-4 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
-        />
-      </div> */}
 
-      {/* Song List */}
-      <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+      {/* Song List - Scrollable */}
+      <div className="overflow-hidden" style={{height: 720}}>
+        <div className="space-y-2 h-full overflow-y-auto custom-scrollbar pr-2">
         {isLoadingSongs ? (
           <div className="text-center py-8">
             <div className="w-6 h-6 border border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
@@ -142,7 +136,7 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
             return (
               <div
                 key={song.id}
-                className={`rounded-lg p-3 hover:bg-gray-700/50 transition-colors group ${
+                className={`rounded-lg p-1 hover:bg-gray-700/50 transition-colors group ${
                   isPlaying
                     ? 'bg-gray-800/50 border-2 border-red-500' // Tomato border for playing songs
                     : 'bg-gray-800/30 border-2 border-transparent'
@@ -164,7 +158,7 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
 
                   {/* Song Info */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-white font-semibold text-sm truncate">
+                    <h4 className="text-white font-semibold text-xs truncate">
                       {song.title}
                     </h4>
                     <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -221,9 +215,8 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
             );
           })
         )}
+        </div>
       </div>
-
-      
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog
