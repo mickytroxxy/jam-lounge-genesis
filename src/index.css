@@ -182,3 +182,68 @@
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #7c3aed, #db2777);
 }
+
+/* DJ Slider Styles */
+.slider-purple::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+.slider-pink::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ec4899, #f472b6);
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+}
+
+.slider-blue::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.slider-purple::-webkit-slider-track,
+.slider-pink::-webkit-slider-track,
+.slider-blue::-webkit-slider-track {
+  height: 8px;
+  border-radius: 4px;
+  background: #374151;
+}
+
+/* Firefox slider styles */
+.slider-purple::-moz-range-thumb,
+.slider-pink::-moz-range-thumb,
+.slider-blue::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+}
+
+.slider-purple::-moz-range-thumb {
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+}
+
+.slider-pink::-moz-range-thumb {
+  background: linear-gradient(135deg, #ec4899, #f472b6);
+}
+
+.slider-blue::-moz-range-thumb {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
