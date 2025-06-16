@@ -9,7 +9,6 @@ import DJHeader from '@/components/virtualDJ/DJHeader';
 import DeckA from '@/components/virtualDJ/DeckA';
 import DeckB from '@/components/virtualDJ/DeckB';
 import MixerPanel from '@/components/virtualDJ/MixerPanel';
-import AdvancedEffects from '@/components/virtualDJ/AdvancedEffects';
 import MusicLibrary from '@/components/virtualDJ/MusicLibrary';
 
 const VirtualDJ = () => {
@@ -57,6 +56,22 @@ const VirtualDJ = () => {
     // Effect states
     deckAEffects,
     deckBEffects,
+
+    // Loop and Cue controls for Deck A
+    setDeckALoopIn,
+    setDeckALoopOut,
+    toggleDeckALoop,
+    setDeckACuePoint,
+    jumpToDeckACue,
+    beatJumpDeckA,
+
+    // Loop and Cue controls for Deck B
+    setDeckBLoopIn,
+    setDeckBLoopOut,
+    toggleDeckBLoop,
+    setDeckBCuePoint,
+    jumpToDeckBCue,
+    beatJumpDeckB,
 
     // Sound Effects
     playSoundEffect,
@@ -147,6 +162,12 @@ const VirtualDJ = () => {
                 updateDeckAEQ={updateDeckAEQ}
                 toggleDeckAReverb={toggleDeckAReverb}
                 toggleDeckAEcho={toggleDeckAEcho}
+                setLoopIn={setDeckALoopIn}
+                setLoopOut={setDeckALoopOut}
+                toggleLoop={toggleDeckALoop}
+                setCuePoint={setDeckACuePoint}
+                jumpToCue={jumpToDeckACue}
+                beatJump={beatJumpDeckA}
               />
 
               {/* Center Mixer */}
@@ -158,6 +179,10 @@ const VirtualDJ = () => {
                 updateMasterVolume={updateMasterVolume}
                 syncBPM={syncBPM}
                 playSoundEffect={playSoundEffect}
+                deckAEffects={deckAEffects}
+                updateDeckAEffects={updateDeckAEffects}
+                updateDeckADelay={updateDeckADelay}
+                updateDeckAReverb={updateDeckAReverb}
               />
 
               {/* Music Library */}
@@ -182,20 +207,13 @@ const VirtualDJ = () => {
                 updateDeckBReverb={updateDeckBReverb}
                 toggleDeckBReverb={toggleDeckBReverb}
                 toggleDeckBEcho={toggleDeckBEcho}
+                setLoopIn={setDeckBLoopIn}
+                setLoopOut={setDeckBLoopOut}
+                toggleLoop={toggleDeckBLoop}
+                setCuePoint={setDeckBCuePoint}
+                jumpToCue={jumpToDeckBCue}
+                beatJump={beatJumpDeckB}
               />
-            </div>
-
-            {/* Bottom Effects Panel */}
-            <div className="flex justify-center">
-              {/* Advanced Effects */}
-              <div className="w-full max-w-md">
-                <AdvancedEffects
-                  deckAEffects={deckAEffects}
-                  updateDeckAEffects={updateDeckAEffects}
-                  updateDeckADelay={updateDeckADelay}
-                  updateDeckAReverb={updateDeckAReverb}
-                />
-              </div>
             </div>
           </div>
         </div>

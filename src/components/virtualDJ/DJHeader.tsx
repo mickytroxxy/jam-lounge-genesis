@@ -1,28 +1,30 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, User, Wallet } from 'lucide-react';
+import { ArrowLeft, User, Wallet, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { currencyFormatter } from '@/utils';
+import { Button } from '@/components/ui/button';
 
 interface DJHeaderProps {
   // Remove recording props as we're replacing with DJ info
 }
 
 const DJHeader: React.FC<DJHeaderProps> = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
-    <div className="container mx-auto px-6 py-3">
+    <div className="container mx-auto px-6 py-2">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Link to="/" className="glass-card p-2 hover-lift">
             <ArrowLeft className="w-5 h-5 text-white" />
           </Link>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-playfair font-bold text-white">
-              PlayMyJam <span className="neon-text">DJ</span>
-            </h1>
-            <p className="text-gray-300 text-sm">Bid-to-Play DJ Experience</p>
+            <img
+              src="/src/assets/images/play.png"
+              alt="PlayMyJam DJ"
+              className="h-8 lg:h-10 w-auto"
+            />
           </div>
         </div>
 
@@ -33,17 +35,16 @@ const DJHeader: React.FC<DJHeaderProps> = () => {
             <div className="glass-card px-4 py-2 flex items-center gap-2">
               <Wallet className="w-4 h-4 text-green-400" />
               <div className="text-right">
-                <p className="text-green-400 font-semibold text-sm">
+                <p className="text-green-400 font-montserrat-bold">
                   {currencyFormatter(user.balance || 0)}
                 </p>
-                <p className="text-gray-400 text-xs">Balance</p>
               </div>
             </div>
 
             {/* DJ Profile */}
-            <div className="glass-card px-4 py-2 flex items-center gap-3">
+            <div className="glass-card px-4 py-1 flex items-center gap-3">
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
                 {user.avatar ? (
                   <img
                     src={user.avatar}
@@ -57,18 +58,26 @@ const DJHeader: React.FC<DJHeaderProps> = () => {
 
               {/* DJ Info */}
               <div className="text-left">
-                <p className="text-white font-semibold text-sm">
+                <p className="text-white font-montserrat-bold">
                   {user.djInfo?.djName || user.fname || 'DJ'}
-                </p>
-                <p className="text-gray-400 text-xs capitalize">
-                  {user.role === 'dj' ? 'DJ' : user.role || 'User'}
                 </p>
               </div>
             </div>
+
+            {/* Logout Button */}
+            <Button
+              onClick={logout}
+              variant="outline"
+              size="sm"
+              className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white font-montserrat-bold transition-colors"
+            >
+              <LogOut className="w-4 h-4 mr-1" />
+              Logout
+            </Button>
           </div>
         ) : (
           <div className="glass-card px-4 py-2">
-            <p className="text-gray-400 text-sm">Please login to continue</p>
+            <p className="text-gray-400 font-montserrat-light">Please login to continue</p>
           </div>
         )}
       </div>

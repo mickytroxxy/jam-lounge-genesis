@@ -1358,6 +1358,159 @@ export const useMusicPlayer = () => {
     }
   }, [updateDeckBReverb]);
 
+  // Loop and Cue functionality for Deck A
+  const setDeckALoopIn = useCallback((position: number) => {
+    if (deckAAudioRef.current) {
+      deckAAudioRef.current.dataset.loopIn = position.toString();
+      console.log(`🔄 Deck A Loop IN set at: ${position.toFixed(2)}s`);
+    }
+  }, []);
+
+  const setDeckALoopOut = useCallback((position: number) => {
+    if (deckAAudioRef.current) {
+      deckAAudioRef.current.dataset.loopOut = position.toString();
+      console.log(`🔄 Deck A Loop OUT set at: ${position.toFixed(2)}s`);
+    }
+  }, []);
+
+  const toggleDeckALoop = useCallback(() => {
+    if (deckAAudioRef.current) {
+      const loopIn = parseFloat(deckAAudioRef.current.dataset.loopIn || '0');
+      const loopOut = parseFloat(deckAAudioRef.current.dataset.loopOut || '0');
+      const isLooping = deckAAudioRef.current.dataset.isLooping === 'true';
+
+      if (loopIn && loopOut && loopOut > loopIn) {
+        deckAAudioRef.current.dataset.isLooping = (!isLooping).toString();
+        console.log(`🔄 Deck A Loop ${!isLooping ? 'ON' : 'OFF'}: ${loopIn.toFixed(2)}s - ${loopOut.toFixed(2)}s`);
+
+        if (!isLooping) {
+          // Start loop monitoring
+          const checkLoop = () => {
+            if (deckAAudioRef.current && deckAAudioRef.current.dataset.isLooping === 'true') {
+              const currentTime = deckAAudioRef.current.currentTime;
+              if (currentTime >= loopOut) {
+                deckAAudioRef.current.currentTime = loopIn;
+                console.log(`🔄 Deck A Loop: Jumped back to ${loopIn.toFixed(2)}s`);
+              }
+              setTimeout(checkLoop, 100); // Check every 100ms
+            }
+          };
+          checkLoop();
+        }
+      } else {
+        console.warn('❌ Deck A: Set both Loop IN and OUT points first');
+      }
+    }
+  }, []);
+
+  const setDeckACuePoint = useCallback((position: number) => {
+    if (deckAAudioRef.current) {
+      deckAAudioRef.current.dataset.cuePoint = position.toString();
+      console.log(`🎯 Deck A Cue point set at: ${position.toFixed(2)}s`);
+    }
+  }, []);
+
+  const jumpToDeckACue = useCallback(() => {
+    if (deckAAudioRef.current) {
+      const cuePoint = parseFloat(deckAAudioRef.current.dataset.cuePoint || '0');
+      if (cuePoint) {
+        deckAAudioRef.current.currentTime = cuePoint;
+        console.log(`🎯 Deck A: Jumped to cue point at ${cuePoint.toFixed(2)}s`);
+      } else {
+        console.warn('❌ Deck A: No cue point set');
+      }
+    }
+  }, []);
+
+  // Loop and Cue functionality for Deck B
+  const setDeckBLoopIn = useCallback((position: number) => {
+    if (deckBAudioRef.current) {
+      deckBAudioRef.current.dataset.loopIn = position.toString();
+      console.log(`🔄 Deck B Loop IN set at: ${position.toFixed(2)}s`);
+    }
+  }, []);
+
+  const setDeckBLoopOut = useCallback((position: number) => {
+    if (deckBAudioRef.current) {
+      deckBAudioRef.current.dataset.loopOut = position.toString();
+      console.log(`🔄 Deck B Loop OUT set at: ${position.toFixed(2)}s`);
+    }
+  }, []);
+
+  const toggleDeckBLoop = useCallback(() => {
+    if (deckBAudioRef.current) {
+      const loopIn = parseFloat(deckBAudioRef.current.dataset.loopIn || '0');
+      const loopOut = parseFloat(deckBAudioRef.current.dataset.loopOut || '0');
+      const isLooping = deckBAudioRef.current.dataset.isLooping === 'true';
+
+      if (loopIn && loopOut && loopOut > loopIn) {
+        deckBAudioRef.current.dataset.isLooping = (!isLooping).toString();
+        console.log(`🔄 Deck B Loop ${!isLooping ? 'ON' : 'OFF'}: ${loopIn.toFixed(2)}s - ${loopOut.toFixed(2)}s`);
+
+        if (!isLooping) {
+          // Start loop monitoring
+          const checkLoop = () => {
+            if (deckBAudioRef.current && deckBAudioRef.current.dataset.isLooping === 'true') {
+              const currentTime = deckBAudioRef.current.currentTime;
+              if (currentTime >= loopOut) {
+                deckBAudioRef.current.currentTime = loopIn;
+                console.log(`🔄 Deck B Loop: Jumped back to ${loopIn.toFixed(2)}s`);
+              }
+              setTimeout(checkLoop, 100); // Check every 100ms
+            }
+          };
+          checkLoop();
+        }
+      } else {
+        console.warn('❌ Deck B: Set both Loop IN and OUT points first');
+      }
+    }
+  }, []);
+
+  const setDeckBCuePoint = useCallback((position: number) => {
+    if (deckBAudioRef.current) {
+      deckBAudioRef.current.dataset.cuePoint = position.toString();
+      console.log(`🎯 Deck B Cue point set at: ${position.toFixed(2)}s`);
+    }
+  }, []);
+
+  const jumpToDeckBCue = useCallback(() => {
+    if (deckBAudioRef.current) {
+      const cuePoint = parseFloat(deckBAudioRef.current.dataset.cuePoint || '0');
+      if (cuePoint) {
+        deckBAudioRef.current.currentTime = cuePoint;
+        console.log(`🎯 Deck B: Jumped to cue point at ${cuePoint.toFixed(2)}s`);
+      } else {
+        console.warn('❌ Deck B: No cue point set');
+      }
+    }
+  }, []);
+
+  // Beat Jump functionality
+  const beatJumpDeckA = useCallback((beats: number) => {
+    if (deckAAudioRef.current) {
+      const bpm = musicPlayerState.bpmA || 128;
+      const secondsPerBeat = 60 / bpm;
+      const jumpTime = beats * secondsPerBeat;
+      const newTime = Math.max(0, Math.min(deckAAudioRef.current.duration, deckAAudioRef.current.currentTime + jumpTime));
+
+      deckAAudioRef.current.currentTime = newTime;
+      console.log(`⏭️ Deck A Beat Jump: ${beats > 0 ? '+' : ''}${beats} beats (${jumpTime.toFixed(2)}s) to ${newTime.toFixed(2)}s`);
+    }
+  }, [musicPlayerState.bpmA]);
+
+  const beatJumpDeckB = useCallback((beats: number) => {
+    if (deckBAudioRef.current) {
+      const bpm = musicPlayerState.bpmB || 128;
+      const secondsPerBeat = 60 / bpm;
+      const jumpTime = beats * secondsPerBeat;
+      const newTime = Math.max(0, Math.min(deckBAudioRef.current.duration, deckBAudioRef.current.currentTime + jumpTime));
+
+      deckBAudioRef.current.currentTime = newTime;
+      console.log(`⏭️ Deck B Beat Jump: ${beats > 0 ? '+' : ''}${beats} beats (${jumpTime.toFixed(2)}s) to ${newTime.toFixed(2)}s`);
+    }
+  }, [musicPlayerState.bpmB]);
+
   // Log the final state before returning
   console.log('Final musicPlayerState before return:', musicPlayerState);
 
@@ -1477,6 +1630,22 @@ export const useMusicPlayer = () => {
     toggleDeckBEcho,
     toggleDeckAReverb,
     toggleDeckBReverb,
+
+    // Loop and Cue controls for Deck A
+    setDeckALoopIn,
+    setDeckALoopOut,
+    toggleDeckALoop,
+    setDeckACuePoint,
+    jumpToDeckACue,
+    beatJumpDeckA,
+
+    // Loop and Cue controls for Deck B
+    setDeckBLoopIn,
+    setDeckBLoopOut,
+    toggleDeckBLoop,
+    setDeckBCuePoint,
+    jumpToDeckBCue,
+    beatJumpDeckB,
 
     // Debug/utility functions
     resetLoadingStates,
