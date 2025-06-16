@@ -92,7 +92,7 @@ const LoginModal = () => {
             {/* Phone Number Field */}
             <div>
               <label className="block text-white text-sm font-medium mb-2">
-                Phone Number
+                Phone Number eg 27..., 263..., 44...
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -112,7 +112,7 @@ const LoginModal = () => {
                       ? 'border-red-500 focus:ring-red-500/50' 
                       : 'border-white/10 focus:border-purple-400 focus:ring-purple-400/50'
                   }`}
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your phone number eg 27..., 263..., 44..."
                   disabled={isLoading}
                 />
               </div>
@@ -186,7 +186,7 @@ const LoginModal = () => {
             <p className="text-gray-400 text-sm">
               Don't have an account?{' '}
               <button className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-                Sign up
+                Sign up on the app
               </button>
             </p>
           </div>
