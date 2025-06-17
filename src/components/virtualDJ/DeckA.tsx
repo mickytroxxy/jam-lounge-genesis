@@ -50,6 +50,12 @@ const DeckA: React.FC<DeckAProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
 
+  // Vinyl scratching state
+  const [isScratching, setIsScratching] = useState(false);
+  const [lastMouseY, setLastMouseY] = useState(0);
+  const [originalPlaybackRate, setOriginalPlaybackRate] = useState(1);
+  const vinylRef = useRef<HTMLDivElement>(null);
+
   // Generate music visualizer data (simulates frequency analysis)
   useEffect(() => {
     if (deckA.isPlaying) {
@@ -231,6 +237,72 @@ const DeckA: React.FC<DeckAProps> = ({
     toggleSlipMode?.();
   };
 
+  // Vinyl scratching handlers
+  const handleVinylMouseDown = (e: React.MouseEvent) => {
+    if (!deckA.currentTrack) return;
+
+    console.log('🎵 Vinyl scratch started');
+    setIsScratching(true);
+    setLastMouseY(e.clientY);
+
+    // Pause the track using the toggle function
+    if (deckA.isPlaying) {
+      setOriginalPlaybackRate(1);
+      toggleDeckA?.(); // This will pause the track
+    }
+
+    // Prevent text selection
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleVinylMouseMove = (e: React.MouseEvent) => {
+    if (!isScratching || !deckA.currentTrack) return;
+
+    const deltaY = e.clientY - lastMouseY;
+
+    // Play scratch sound effect based on movement
+    if (Math.abs(deltaY) > 5) {
+      console.log('🎵 Triggering scratch sound effect');
+      // Trigger scratch sound effect
+      const scratchEvent = new CustomEvent('playScratchEffect');
+      window.dispatchEvent(scratchEvent);
+    }
+
+    setLastMouseY(e.clientY);
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleVinylMouseUp = () => {
+    if (!isScratching) return;
+
+    console.log('🎵 Vinyl scratch ended');
+    setIsScratching(false);
+
+    // Resume playback if it was playing before scratching
+    if (originalPlaybackRate > 0 && !deckA.isPlaying) {
+      toggleDeckA?.(); // This will resume the track
+    }
+  };
+
+  // Add global mouse up listener for when mouse leaves vinyl area
+  React.useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isScratching) {
+        handleVinylMouseUp();
+      }
+    };
+
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+    document.addEventListener('mouseleave', handleGlobalMouseUp);
+
+    return () => {
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('mouseleave', handleGlobalMouseUp);
+    };
+  }, [isScratching, deckA.isPlaying, originalPlaybackRate]);
+
   return (
     <div className="glass-card p-4 animate-fade-in-up font-montserrat-light">
       <div className="flex items-center gap-3 mb-8">
@@ -251,15 +323,31 @@ const DeckA: React.FC<DeckAProps> = ({
           style={{ zIndex: 1 }}
         />
 
-        {/* Vinyl Simulation - positioned on top of visualizer */}
-        <div className="relative w-32 h-32 bg-gradient-to-br from-gray-800 to-black rounded-full border-2 border-purple-400/30 flex items-center justify-center" style={{ zIndex: 2 }}>
-          <div className={`w-28 h-28 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full flex items-center justify-center p-2 ${deckA.isPlaying ? 'animate-spin' : ''}`} style={{animationDuration: '3s'}}>
+        {/* Vinyl Simulation - positioned on top of visualizer with scratching */}
+        <div
+          ref={vinylRef}
+          className={`relative w-32 h-32 bg-gradient-to-br from-gray-800 to-black rounded-full border-2 ${
+            isScratching ? 'border-red-500' : 'border-purple-400/30'
+          } flex items-center justify-center cursor-grab active:cursor-grabbing transition-colors`}
+          style={{ zIndex: 2 }}
+          onMouseDown={handleVinylMouseDown}
+          onMouseMove={handleVinylMouseMove}
+          onMouseUp={handleVinylMouseUp}
+        >
+          <div className={`w-28 h-28 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full flex items-center justify-center p-2 ${
+            deckA.isPlaying && !isScratching ? 'animate-spin' : ''
+          }`} style={{animationDuration: '3s'}}>
             {deckA.currentTrack?.albumArt ? (
               <img src={deckA.currentTrack.albumArt} alt="Album Art" className="w-full h-full rounded-full object-cover" />
             ) : (
               <Music className="w-6 h-6 text-white" />
             )}
           </div>
+
+          {/* Scratch indicator */}
+          {isScratching && (
+            <div className="absolute inset-0 rounded-full border-2 border-red-500 animate-pulse" />
+          )}
         </div>
       </div>
 

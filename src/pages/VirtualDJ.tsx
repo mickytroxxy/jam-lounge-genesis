@@ -80,6 +80,20 @@ const VirtualDJ = () => {
   // Audio logic for song status updates
   const { handleSongUpdate } = useAudioLogic(djSongs || []);
 
+  // Listen for scratch sound effects from vinyl interaction
+  useEffect(() => {
+    const handleScratchEffect = () => {
+      console.log('🎵 Scratch event received, playing scratch sound');
+      playSoundEffect('scratch');
+    };
+
+    window.addEventListener('playScratchEffect', handleScratchEffect);
+
+    return () => {
+      window.removeEventListener('playScratchEffect', handleScratchEffect);
+    };
+  }, [playSoundEffect]);
+
 
 
   // Enhanced toggle functions that update song status
@@ -137,7 +151,7 @@ const VirtualDJ = () => {
   return (
     <>
       <LoginModal />
-      <div className="min-h-screen bg-gradient-to-br from-[#222240] via-[#3a3a6a] to-[#222240]">
+      <div className="min-h-screen bg-gradient-to-br from-[#222240] via-[#3a3a6a] to-[#222240] select-none">
         {/* Background Effects */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-float"></div>

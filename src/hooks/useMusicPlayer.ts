@@ -911,142 +911,68 @@ export const useMusicPlayer = () => {
     }
   }, []);
 
-  // Sound Effects (DJ Sound FX)
+  // Sound Effects (DJ Sound FX) - Using MP3 files
   const playSoundEffect = useCallback((effectType: 'siren' | 'scratch' | 'laser' | 'horn' | 'whoosh' | 'zap') => {
-    if (!audioContextRef.current || !masterGainRef.current) {
-      console.warn('❌ Sound effects not available - Web Audio not initialized');
-      return;
-    }
+    console.log(`🎵 playSoundEffect called with: ${effectType}`);
 
-    const ctx = audioContextRef.current;
-    const now = ctx.currentTime;
+    try {
+      // Map effect types to actual MP3 file names
+      const effectFiles = {
+        horn: 'air-horn-djmix-1.mp3',
+        siren: 'Siren-Sound2.mp3',
+        scratch: 'dj-scratch-87179.mp3',
+        whoosh: 're-verse-dj-fx-344132.mp3',
+        laser: 'Laser_dancehall.mp3',
+        zap: 'Explosion.mp3'
+      };
 
-    // Create oscillator and gain for the effect
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    const filterNode = ctx.createBiquadFilter();
+      // Create audio element for the effect
+      const audioPath = `/effects/${effectFiles[effectType]}`;
+      console.log(`🎵 Attempting to play sound effect: ${effectType} from ${audioPath}`);
 
-    // Connect: oscillator -> filter -> gain -> master
-    oscillator.connect(filterNode);
-    filterNode.connect(gainNode);
-    gainNode.connect(masterGainRef.current);
+      const audio = new Audio(audioPath);
 
-    switch (effectType) {
-      case 'siren':
-        // Police siren effect
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(800, now);
-        oscillator.frequency.linearRampToValueAtTime(1200, now + 0.5);
-        oscillator.frequency.linearRampToValueAtTime(800, now + 1.0);
-        oscillator.frequency.linearRampToValueAtTime(1200, now + 1.5);
-        oscillator.frequency.linearRampToValueAtTime(800, now + 2.0);
+      // Set audio properties for DJ effects
+      audio.volume = 0.8; // High volume for cutting through mix
+      audio.preload = 'auto';
 
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.1);
-        gainNode.gain.linearRampToValueAtTime(0.3, now + 1.9);
-        gainNode.gain.linearRampToValueAtTime(0, now + 2.0);
+      // Apply master volume if available
+      if (masterGainRef.current) {
+        audio.volume = 0.8 * (masterGainRef.current.gain.value || 1);
+      }
 
-        oscillator.start(now);
-        oscillator.stop(now + 2.0);
-        console.log('🚨 Siren effect played');
-        break;
+      // Add load event listener
+      audio.addEventListener('loadstart', () => {
+        console.log(`📁 Loading ${effectType} effect...`);
+      });
 
-      case 'scratch':
-        // Vinyl scratch effect
-        oscillator.type = 'sawtooth';
-        oscillator.frequency.setValueAtTime(100, now);
-        oscillator.frequency.exponentialRampToValueAtTime(2000, now + 0.1);
-        oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+      audio.addEventListener('canplay', () => {
+        console.log(`✅ ${effectType} effect ready to play`);
+      });
 
-        filterNode.type = 'highpass';
-        filterNode.frequency.setValueAtTime(200, now);
+      audio.addEventListener('error', (e) => {
+        console.error(`❌ Error loading ${effectType} effect:`, e);
+        console.error(`File path: ${audioPath}`);
+      });
 
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.4, now + 0.01);
-        gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+      // Play the effect
+      audio.play().then(() => {
+        console.log(`🎵 ${effectType.toUpperCase()} effect played successfully from MP3`);
+      }).catch((error) => {
+        console.warn(`❌ Failed to play ${effectType} effect:`, error);
+        console.warn(`File path attempted: ${audioPath}`);
+        // Fallback to console notification
+        console.log(`🔊 ${effectType.toUpperCase()} effect triggered (audio failed)`);
+      });
 
-        oscillator.start(now);
-        oscillator.stop(now + 0.3);
-        console.log('🎵 Scratch effect played');
-        break;
+      // Clean up audio element after playback
+      audio.addEventListener('ended', () => {
+        console.log(`🏁 ${effectType} effect finished playing`);
+        audio.remove();
+      });
 
-      case 'laser':
-        // Laser zap effect
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(1000, now);
-        oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.5);
-
-        filterNode.type = 'lowpass';
-        filterNode.frequency.setValueAtTime(2000, now);
-        filterNode.frequency.linearRampToValueAtTime(500, now + 0.5);
-
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-
-        oscillator.start(now);
-        oscillator.stop(now + 0.5);
-        console.log('⚡ Laser effect played');
-        break;
-
-      case 'horn':
-        // Air horn effect
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(220, now);
-
-        filterNode.type = 'bandpass';
-        filterNode.frequency.setValueAtTime(1000, now);
-        filterNode.Q.setValueAtTime(5, now);
-
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.4, now + 0.05);
-        gainNode.gain.linearRampToValueAtTime(0.4, now + 0.8);
-        gainNode.gain.linearRampToValueAtTime(0, now + 1.0);
-
-        oscillator.start(now);
-        oscillator.stop(now + 1.0);
-        console.log('📯 Horn effect played');
-        break;
-
-      case 'whoosh':
-        // Whoosh sweep effect
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(2000, now);
-        oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.8);
-
-        filterNode.type = 'highpass';
-        filterNode.frequency.setValueAtTime(500, now);
-        filterNode.frequency.linearRampToValueAtTime(100, now + 0.8);
-
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.2, now + 0.1);
-        gainNode.gain.linearRampToValueAtTime(0, now + 0.8);
-
-        oscillator.start(now);
-        oscillator.stop(now + 0.8);
-        console.log('💨 Whoosh effect played');
-        break;
-
-      case 'zap':
-        // Electric zap effect
-        oscillator.type = 'sawtooth';
-        oscillator.frequency.setValueAtTime(800, now);
-        oscillator.frequency.linearRampToValueAtTime(400, now + 0.05);
-        oscillator.frequency.linearRampToValueAtTime(1200, now + 0.1);
-        oscillator.frequency.linearRampToValueAtTime(200, now + 0.2);
-
-        filterNode.type = 'bandpass';
-        filterNode.frequency.setValueAtTime(1500, now);
-        filterNode.Q.setValueAtTime(10, now);
-
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
-        gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
-
-        oscillator.start(now);
-        oscillator.stop(now + 0.2);
-        console.log('⚡ Zap effect played');
-        break;
+    } catch (error) {
+      console.error(`❌ Error loading ${effectType} sound effect:`, error);
     }
   }, []);
 

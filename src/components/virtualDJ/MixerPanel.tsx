@@ -1,6 +1,7 @@
 import React from 'react';
-import { Volume2, Shuffle, RotateCcw } from 'lucide-react';
+import { Volume2, Shuffle, RotateCcw, Play, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 
 interface MixerPanelProps {
   crossfader: number;
@@ -30,6 +31,8 @@ const MixerPanel: React.FC<MixerPanelProps> = ({
   updateDeckADelay,
   updateDeckAReverb,
 }) => {
+  // Enhanced sound effects with play/pause
+  const { soundEffects, toggleEffect, stopAllEffects } = useSoundEffects();
   return (
     <div className="glass-card p-6 animate-fade-in-up font-montserrat-light" style={{animationDelay: '0.1s'}}>
 
@@ -89,26 +92,61 @@ const MixerPanel: React.FC<MixerPanelProps> = ({
         </Button>
       </div>
 
-      {/* Sound Effects */}
+      {/* Enhanced Sound Effects with Play/Pause */}
       <div className="mb-6">
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { name: "Horn", color: "from-red-500 to-red-700", effect: "horn" as const },
-            { name: "Siren", color: "from-yellow-500 to-yellow-700", effect: "siren" as const },
-            { name: "Scratch", color: "from-green-500 to-green-700", effect: "scratch" as const },
-            { name: "Whoosh", color: "from-blue-500 to-blue-700", effect: "whoosh" as const },
-            { name: "Laser", color: "from-purple-500 to-purple-700", effect: "laser" as const },
-            { name: "Zap", color: "from-pink-500 to-pink-700", effect: "zap" as const },
-          ].map((effect, index) => (
-            <Button
-              key={index}
-              size="sm"
-              className={`bg-gradient-to-br ${effect.color} hover:scale-105 transition-transform h-10 text-white font-montserrat-bold active:scale-95`}
-              onClick={() => playSoundEffect(effect.effect)}
-            >
-              {effect.name}
-            </Button>
-          ))}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-white font-montserrat-bold text-center">Sound Effects</h3>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={stopAllEffects}
+            className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white font-montserrat-bold"
+          >
+            <Square className="w-3 h-3 mr-1" />
+            Stop All
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-1 max-h-48 overflow-y-auto custom-scrollbar">
+          {soundEffects.map((effect, index) => {
+            const colors = [
+              "from-red-500 to-red-700",
+              "from-yellow-500 to-yellow-700",
+              "from-green-500 to-green-700",
+              "from-blue-500 to-blue-700",
+              "from-purple-500 to-purple-700",
+              "from-pink-500 to-pink-700",
+              "from-orange-500 to-orange-700",
+              "from-teal-500 to-teal-700",
+              "from-indigo-500 to-indigo-700",
+              "from-cyan-500 to-cyan-700",
+              "from-lime-500 to-lime-700",
+              "from-rose-500 to-rose-700",
+              "from-amber-500 to-amber-700"
+            ];
+
+            const colorClass = colors[index % colors.length];
+
+            return (
+              <Button
+                key={effect.filename}
+                size="sm"
+                className={`bg-gradient-to-br ${colorClass} hover:scale-105 transition-transform h-8 text-white font-montserrat-bold active:scale-95 flex items-center justify-center px-1 ${
+                  effect.isPlaying ? 'animate-pulse' : ''
+                }`}
+                onClick={() => toggleEffect(effect.filename)}
+              >
+                <span className="text-xs truncate flex-1 text-center">{effect.name}</span>
+                <div className="ml-1">
+                  {effect.isPlaying ? (
+                    <Square className="w-2 h-2" />
+                  ) : (
+                    <Play className="w-2 h-2" />
+                  )}
+                </div>
+              </Button>
+            );
+          })}
         </div>
       </div>
 
