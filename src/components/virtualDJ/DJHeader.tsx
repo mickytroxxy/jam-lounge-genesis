@@ -1,15 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, User, Wallet, LogOut } from 'lucide-react';
+import { ArrowLeft, User, Wallet, LogOut, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { currencyFormatter } from '@/utils';
 import { Button } from '@/components/ui/button';
 
 interface DJHeaderProps {
-  // Remove recording props as we're replacing with DJ info
+  discoLightsEnabled?: boolean;
+  onToggleDiscoLights?: (enabled: boolean) => void;
 }
 
-const DJHeader: React.FC<DJHeaderProps> = () => {
+const DJHeader: React.FC<DJHeaderProps> = ({
+  discoLightsEnabled = true,
+  onToggleDiscoLights
+}) => {
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
@@ -31,6 +35,20 @@ const DJHeader: React.FC<DJHeaderProps> = () => {
         {/* DJ Info Section */}
         {isAuthenticated && user ? (
           <div className="flex items-center gap-4">
+            {/* Disco Lights Toggle */}
+            <Button
+              onClick={() => onToggleDiscoLights?.(!discoLightsEnabled)}
+              variant="outline"
+              size="sm"
+              className={`${
+                discoLightsEnabled
+                  ? 'border-purple-500 text-purple-400 bg-purple-500/20'
+                  : 'border-gray-500 text-gray-400'
+              } hover:bg-purple-500 hover:text-white font-montserrat-bold transition-colors`}
+            >
+              <Sparkles className="w-4 h-4 mr-1" />
+              Disco
+            </Button>
             {/* Balance */}
             <div className="glass-card px-4 py-2 flex items-center gap-2">
               <Wallet className="w-4 h-4 text-green-400" />

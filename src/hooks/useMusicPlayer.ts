@@ -34,6 +34,32 @@ import {
   resetMixer,
 } from '@/store/slices/musicPlayerSlice';
 
+// Simple BPM estimation based on song characteristics
+const estimateBPMFromSong = (song: Song): number => {
+
+  // Try to extract BPM from title
+  const text = song.title.toLowerCase();
+  const bpmMatch = text.match(/(\d{2,3})\s*bpm/);
+  if (bpmMatch) {
+    return parseInt(bpmMatch[1]);
+  }
+
+  // Estimate based on title keywords
+  if (text.includes('house') || text.includes('electronic')) return 125;
+  if (text.includes('techno')) return 130;
+  if (text.includes('trance')) return 135;
+  if (text.includes('dubstep') || text.includes('bass')) return 140;
+  if (text.includes('hip hop') || text.includes('rap')) return 85;
+  if (text.includes('pop')) return 115;
+  if (text.includes('rock')) return 120;
+
+  // Default estimation based on duration (rough heuristic)
+  const duration = song.duration || 180; // Default 3 minutes
+  if (duration < 120) return 140; // Short songs tend to be faster
+  if (duration > 300) return 100; // Long songs tend to be slower
+  return 120; // Default house/electronic BPM
+};
+
 export const useMusicPlayer = () => {
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAuth();
@@ -139,6 +165,7 @@ export const useMusicPlayer = () => {
       deckAAudioRef.current = new Audio();
       deckAAudioRef.current.preload = 'metadata';
       deckAAudioRef.current.crossOrigin = 'anonymous'; // CORS enabled
+      deckAAudioRef.current.setAttribute('data-deck', 'A'); // For disco lights
 
       // Add event listeners for proper state management
       deckAAudioRef.current.addEventListener('ended', () => {
@@ -159,6 +186,7 @@ export const useMusicPlayer = () => {
       deckBAudioRef.current = new Audio();
       deckBAudioRef.current.preload = 'metadata';
       deckBAudioRef.current.crossOrigin = 'anonymous'; // CORS enabled
+      deckBAudioRef.current.setAttribute('data-deck', 'B'); // For disco lights
 
       // Add event listeners for proper state management
       deckBAudioRef.current.addEventListener('ended', () => {
@@ -357,6 +385,12 @@ export const useMusicPlayer = () => {
           console.log('Deck A audio element ready state:', deckAAudioRef.current.readyState);
           console.log('Deck A audio element can play:', deckAAudioRef.current.readyState >= 2);
           dispatch(setDeckADuration(deckAAudioRef.current.duration));
+
+          // Set BPM from song data or estimate based on title/duration
+          const estimatedBPM = estimateBPMFromSong(song);
+          dispatch(setBPMA(estimatedBPM));
+          console.log(`🎵 Deck A BPM set to: ${estimatedBPM}`);
+
           dispatch(setDeckALoading(false));
         }
       };
@@ -607,6 +641,12 @@ export const useMusicPlayer = () => {
         if (deckBAudioRef.current) {
           console.log('Deck B metadata loaded, duration:', deckBAudioRef.current.duration);
           dispatch(setDeckBDuration(deckBAudioRef.current.duration));
+
+          // Set BPM from song data or estimate based on title/duration
+          const estimatedBPM = estimateBPMFromSong(song);
+          dispatch(setBPMB(estimatedBPM));
+          console.log(`🎵 Deck B BPM set to: ${estimatedBPM}`);
+
           dispatch(setDeckBLoading(false));
         }
       };
@@ -1154,6 +1194,17 @@ export const useMusicPlayer = () => {
     }
   }, [musicPlayerState.bpmA, musicPlayerState.bpmB, dispatch]);
 
+  // BPM Unsync functionality
+  const unsyncBPM = useCallback(() => {
+    console.log('🎵 BPM Unsync: Restoring original playback rates');
+
+    if (deckBAudioRef.current) {
+      deckBAudioRef.current.playbackRate = 1.0; // Reset to normal speed
+      console.log('📈 Deck B playback rate reset to: 1.0x');
+      dispatch(setSynced(false));
+    }
+  }, [dispatch]);
+
   // Reset functions
   const resetDeckAState = useCallback(() => {
     pauseDeckA();
@@ -1496,6 +1547,7 @@ export const useMusicPlayer = () => {
       resetMixerState: () => {},
       toggleRecording: () => {},
       syncBPM: () => {},
+      unsyncBPM: () => {},
       toggleDeckAEcho: () => {},
       toggleDeckBEcho: () => {},
       toggleDeckAReverb: () => {},
@@ -1564,6 +1616,7 @@ export const useMusicPlayer = () => {
     
     // BPM and sync
     syncBPM,
+    unsyncBPM,
 
     // Quick effect toggles
     toggleDeckAEcho,

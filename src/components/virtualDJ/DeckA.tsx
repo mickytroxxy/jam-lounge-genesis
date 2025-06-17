@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Music, Disc, Zap, Waves, RotateCcw, Repeat, Volume2, FastForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import DiscoLights from './DiscoLights';
 
 interface DeckAProps {
   deckA: any;
@@ -20,6 +21,8 @@ interface DeckAProps {
   jumpToCue?: () => void;
   beatJump?: (beats: number) => void;
   toggleSlipMode?: () => void;
+  // Disco lights
+  discoLightsEnabled?: boolean;
 }
 
 const DeckA: React.FC<DeckAProps> = ({
@@ -39,6 +42,7 @@ const DeckA: React.FC<DeckAProps> = ({
   jumpToCue,
   beatJump,
   toggleSlipMode,
+  discoLightsEnabled = true,
 }) => {
   // Local state for advanced features
   const [loopIn, setLoopInState] = useState<number | null>(null);
@@ -304,7 +308,8 @@ const DeckA: React.FC<DeckAProps> = ({
   }, [isScratching, deckA.isPlaying, originalPlaybackRate]);
 
   return (
-    <div className="glass-card p-4 animate-fade-in-up font-montserrat-light">
+    <DiscoLights isPlaying={deckA.isPlaying} deckId="A" enabled={discoLightsEnabled}>
+      <div className="glass-card p-4 animate-fade-in-up font-montserrat-light">
       <div className="flex items-center gap-3 mb-8">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
           <Disc className="w-4 h-4 text-white animate-spin" style={{animationDuration: deckA.isPlaying ? '2s' : '0s'}} />
@@ -577,9 +582,10 @@ const DeckA: React.FC<DeckAProps> = ({
           </Button>
         </div>
 
-        
+
       </div>
     </div>
+    </DiscoLights>
   );
 };
 

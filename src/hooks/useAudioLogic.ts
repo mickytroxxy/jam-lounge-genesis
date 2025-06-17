@@ -1,10 +1,13 @@
 import { createData, getUserDetailsByUserId, updateTable } from "@/api";
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/api';
 import { useAppSelector } from "@/store/hooks";
 import { setAccountInfo } from "@/store/slices/accountInfo";
 import { Song } from "@/Types";
 import { useCallback, useState, useRef, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import moment from 'moment';
+import { useSecrets } from "./useSecrets";
 
 interface AudioState {
   currentPlayingSong: Song | null;
@@ -14,6 +17,7 @@ interface AudioState {
 
 export const useAudioLogic = (songs: Song[] = []) => {
     const dispatch = useDispatch();
+    const {secrets} = useSecrets();
     const accountInfo = useAppSelector((state) => state.accountSlice.accountInfo);
     const [audioState, setAudioState] = useState<AudioState>({
         currentPlayingSong: null,
@@ -37,31 +41,66 @@ export const useAudioLogic = (songs: Song[] = []) => {
     // Clear bid after 45 seconds of playing
     const clearBidAfterDelay = useCallback(async (song: Song) => {
         if (!song.currentBid || !song.currentBiders || song.currentBiders.length === 0) {
+            console.log(`⚠️ No bid to clear for: ${song.title}`);
             return;
         }
 
-        console.log(`⏰ Starting 45-second timer to clear bid for: ${song.title}`);
+        console.log(`⏰ Starting 45-second timer to clear bid for: ${song.title} (Bid: ${song.currentBid} tokens)`);
+
+        // Clear any existing timeout for this song
+        if (bidClearTimeoutRef.current) {
+            clearTimeout(bidClearTimeoutRef.current);
+            console.log(`🔄 Cleared previous timeout for bid clearing`);
+        }
 
         bidClearTimeoutRef.current = setTimeout(async () => {
             try {
-                // Double-check the song is still playing before clearing bids
-                const currentSong = songs.find(s => s.id === song.id);
-                if (currentSong?.isPlaying && currentSong?.DJCurrentSong) {
+                console.log(`⏰ 45 seconds elapsed - attempting to clear bid for: ${song.title}`);
+
+                // Get fresh song data from database to check current state
+                const docRef = doc(db, 'music', song.id);
+                const docSnap = await getDoc(docRef);
+                const freshSongData = docSnap.exists() ? docSnap.data() : null;
+
+                if (freshSongData && (freshSongData.isPlaying || freshSongData.DJCurrentSong)) {
+                    console.log(`🎵 Song ${song.title} is still playing - clearing bid now`);
+
                     await updateTable('music', song.id, {
-                        ...song,
+                        ...freshSongData,
                         currentBiders: [],
                         currentBid: 0,
                         lastUpdated: Date.now()
                     });
-                    console.log(`✅ Bid cleared automatically for: ${song.title} after 45 seconds of playing`);
+
+                    const totalBid = (song?.currentBid || 0) * (secrets?.bidShare || 0.5);
+                    const transactionSuccess = await handleTransaction({
+                        amount: totalBid,
+                        receiver: accountInfo?.userId || '',
+                        sender: secrets?.appId || '',
+                        type: 'transfer',
+                        description: `Bid Share for ${song.title}`
+                    });
+
+                    if (transactionSuccess) {
+                        console.log(`✅ Bid cleared automatically for: ${song.title} after 45 seconds. DJ received ${totalBid} tokens.`);
+                    } else {
+                        console.error(`❌ Failed to transfer bid share for: ${song.title}`);
+                    }
                 } else {
                     console.log(`⚠️ Song ${song.title} is no longer playing, skipping bid clear`);
                 }
+
+                // Clear the timeout reference
+                bidClearTimeoutRef.current = null;
+
             } catch (error) {
-                console.error('Failed to clear bid automatically:', error);
+                console.error(`❌ Failed to clear bid automatically for ${song.title}:`, error);
+                bidClearTimeoutRef.current = null;
             }
         }, 45000); // 45 seconds
-    }, [songs]);
+
+        console.log(`⏰ Timeout set for ${song.title} - will clear in 45 seconds`);
+    }, [secrets?.bidShare, secrets?.appId, accountInfo?.userId]);
 
     // Handle song updates (play, pause, stop)
     const handleSongUpdate = useCallback(async (song: Song, action: 'play' | 'pause' | 'stop', position: number = 0) => {
@@ -207,7 +246,7 @@ export const useAudioLogic = (songs: Song[] = []) => {
           return handleTransaction({
             amount: bidder.amount,
             receiver: bidder.userId,
-            sender: accountInfo?.userId || '',
+            sender: secrets?.appId || '',
             type: 'transfer',
             description: `Song Request Refund`
           });

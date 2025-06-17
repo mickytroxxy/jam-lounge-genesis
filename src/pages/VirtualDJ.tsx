@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { useAudioLogic } from '@/hooks/useAudioLogic';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,6 +49,7 @@ const VirtualDJ = () => {
     updateDeckBReverb,
     toggleRecording,
     syncBPM,
+    unsyncBPM,
 
     // Effect toggles
     toggleDeckAEcho,
@@ -82,6 +83,9 @@ const VirtualDJ = () => {
 
   // Audio logic for song status updates
   const { handleSongUpdate } = useAudioLogic(djSongs || []);
+
+  // Disco lights toggle state
+  const [discoLightsEnabled, setDiscoLightsEnabled] = useState(true);
 
   // Reset decks on page load to prevent state/audio desync
   useEffect(() => {
@@ -170,7 +174,10 @@ const VirtualDJ = () => {
 
         <div className="relative z-10">
           {/* Header */}
-          <DJHeader />
+          <DJHeader
+            discoLightsEnabled={discoLightsEnabled}
+            onToggleDiscoLights={setDiscoLightsEnabled}
+          />
 
           {/* Main DJ Interface */}
           <div className="container mx-auto px-6">
@@ -193,6 +200,7 @@ const VirtualDJ = () => {
                 setCuePoint={setDeckACuePoint}
                 jumpToCue={jumpToDeckACue}
                 beatJump={beatJumpDeckA}
+                discoLightsEnabled={discoLightsEnabled}
               />
 
               {/* Center Mixer */}
@@ -203,6 +211,7 @@ const VirtualDJ = () => {
                 updateCrossfader={updateCrossfader}
                 updateMasterVolume={updateMasterVolume}
                 syncBPM={syncBPM}
+                unsyncBPM={unsyncBPM}
                 playSoundEffect={playSoundEffect}
                 deckAEffects={deckAEffects}
                 updateDeckAEffects={updateDeckAEffects}
@@ -238,6 +247,7 @@ const VirtualDJ = () => {
                 setCuePoint={setDeckBCuePoint}
                 jumpToCue={jumpToDeckBCue}
                 beatJump={beatJumpDeckB}
+                discoLightsEnabled={discoLightsEnabled}
               />
             </div>
           </div>

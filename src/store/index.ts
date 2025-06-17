@@ -3,6 +3,7 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import accountSlice from './slices/accountInfo';
 import musicPlayerSlice from './slices/musicPlayerSlice';
+import globalVariables from './slices/globalVariables';
 
 // Music player persist config - exclude loading and playback states
 const musicPlayerPersistConfig = {
@@ -33,6 +34,7 @@ const musicPlayerPersistConfig = {
 
 const rootReducer = combineReducers({
   accountSlice,
+  globalVariables,
   musicPlayer: persistReducer(musicPlayerPersistConfig, musicPlayerSlice)
 });
 
@@ -57,6 +59,7 @@ export const store = configureStore({
 export interface RootStateWithoutPersist {
   accountSlice: ReturnType<typeof accountSlice>;
   musicPlayer: ReturnType<typeof musicPlayerSlice>;
+  globalVariables: ReturnType<typeof globalVariables>;
 }
 
 // Define the persisted state type

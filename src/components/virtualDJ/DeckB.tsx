@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Music, Disc, Zap, Waves, RotateCcw, Repeat, Volume2, FastForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import DiscoLights from './DiscoLights';
 
 interface DeckBProps {
   deckB: any;
@@ -23,6 +24,8 @@ interface DeckBProps {
   jumpToCue?: () => void;
   beatJump?: (beats: number) => void;
   toggleSlipMode?: () => void;
+  // Disco lights
+  discoLightsEnabled?: boolean;
 }
 
 const DeckB: React.FC<DeckBProps> = ({
@@ -45,6 +48,7 @@ const DeckB: React.FC<DeckBProps> = ({
   jumpToCue,
   beatJump,
   toggleSlipMode,
+  discoLightsEnabled = true,
 }) => {
   // Local state for advanced features
   const [loopIn, setLoopInState] = useState<number | null>(null);
@@ -310,7 +314,8 @@ const DeckB: React.FC<DeckBProps> = ({
   }, [isScratching, deckB.isPlaying, originalPlaybackRate]);
 
   return (
-    <div className="glass-card p-4 animate-fade-in-up font-montserrat-light" style={{animationDelay: '0.2s'}}>
+    <DiscoLights isPlaying={deckB.isPlaying} deckId="B" enabled={discoLightsEnabled}>
+      <div className="glass-card p-4 animate-fade-in-up font-montserrat-light" style={{animationDelay: '0.2s'}}>
       <div className="flex items-center gap-3 mb-8">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
           <Disc className="w-4 h-4 text-white" />
@@ -585,9 +590,10 @@ const DeckB: React.FC<DeckBProps> = ({
           </Button>
         </div>
 
-        
+
       </div>
     </div>
+    </DiscoLights>
   );
 };
 
