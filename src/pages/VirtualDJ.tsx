@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { useAudioLogic } from '@/hooks/useAudioLogic';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDispatch } from 'react-redux';
+import { resetDeckA, resetDeckB } from '@/store/slices/musicPlayerSlice';
 import LoginModal from '@/components/LoginModal';
 
 // Import VirtualDJ Components
@@ -13,6 +15,7 @@ import MusicLibrary from '@/components/virtualDJ/MusicLibrary';
 
 const VirtualDJ = () => {
   const { isAuthenticated, openLoginModal } = useAuth();
+  const dispatch = useDispatch();
   const {
     // State
     deckA,
@@ -80,6 +83,13 @@ const VirtualDJ = () => {
   // Audio logic for song status updates
   const { handleSongUpdate } = useAudioLogic(djSongs || []);
 
+  // Reset decks on page load to prevent state/audio desync
+  useEffect(() => {
+    console.log('🎵 VirtualDJ page loaded - resetting deck states');
+    dispatch(resetDeckA());
+    dispatch(resetDeckB());
+  }, []); // Only run once on mount
+
   // Listen for scratch sound effects from vinyl interaction
   useEffect(() => {
     const handleScratchEffect = () => {
@@ -141,7 +151,6 @@ const VirtualDJ = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#222240] via-[#3a3a6a] to-[#222240] flex items-center justify-center">
         <div className="text-white text-center">
-          <h1 className="text-2xl mb-4">Loading DJ Interface...</h1>
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>

@@ -466,12 +466,19 @@ export const useMusicPlayer = () => {
   }, [dispatch, musicPlayerState.deckA.currentTrack]);
 
   const toggleDeckA = useCallback(() => {
+    // Check if audio element exists and is in sync with state
+    if (!deckAAudioRef.current && musicPlayerState.deckA.currentTrack) {
+      console.warn('❌ Audio element for Deck A not found but track exists - resetting state');
+      dispatch(setDeckAPlaying(false));
+      return;
+    }
+
     if (musicPlayerState.deckA.isPlaying) {
       pauseDeckA();
     } else {
       playDeckA();
     }
-  }, [musicPlayerState.deckA.isPlaying, playDeckA, pauseDeckA]);
+  }, [musicPlayerState.deckA.isPlaying, musicPlayerState.deckA.currentTrack, playDeckA, pauseDeckA, dispatch]);
 
   // Initialize Web Audio nodes for Deck B (CORS enabled)
   const initializeWebAudioForDeckB = useCallback(() => {
@@ -722,12 +729,19 @@ export const useMusicPlayer = () => {
   }, [dispatch, musicPlayerState.deckB.currentTrack]);
 
   const toggleDeckB = useCallback(() => {
+    // Check if audio element exists and is in sync with state
+    if (!deckBAudioRef.current && musicPlayerState.deckB.currentTrack) {
+      console.warn('❌ Audio element for Deck B not found but track exists - resetting state');
+      dispatch(setDeckBPlaying(false));
+      return;
+    }
+
     if (musicPlayerState.deckB.isPlaying) {
       pauseDeckB();
     } else {
       playDeckB();
     }
-  }, [musicPlayerState.deckB.isPlaying, playDeckB, pauseDeckB]);
+  }, [musicPlayerState.deckB.isPlaying, musicPlayerState.deckB.currentTrack, playDeckB, pauseDeckB, dispatch]);
 
   // Volume controls (Web Audio with HTML5 sync)
   const updateDeckAVolume = useCallback((volume: number) => {
