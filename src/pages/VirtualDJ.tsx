@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMusicPlayer } from '@/hooks/useMusicPlayer';
 import { useAudioLogic } from '@/hooks/useAudioLogic';
+import { useAutoDJ } from '@/hooks/useAutoDJ';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDispatch } from 'react-redux';
 import { resetDeckA, resetDeckB } from '@/store/slices/musicPlayerSlice';
@@ -141,6 +142,20 @@ const VirtualDJ = () => {
     }
   };
 
+  // Auto DJ functionality
+  const autoDJ = useAutoDJ({
+    songs: djSongs || [],
+    deckA,
+    deckB,
+    loadTrackToDeckA,
+    loadTrackToDeckB,
+    toggleDeckA: enhancedToggleDeckA,
+    toggleDeckB: enhancedToggleDeckB,
+    updateCrossfader,
+    crossfader,
+    handleSongUpdate
+  });
+
   // Show login modal when visiting DJ page if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
@@ -177,6 +192,15 @@ const VirtualDJ = () => {
           <DJHeader
             discoLightsEnabled={discoLightsEnabled}
             onToggleDiscoLights={setDiscoLightsEnabled}
+            autoDJState={autoDJ.autoDJState}
+            currentSong={autoDJ.currentSong}
+            nextSong={autoDJ.nextSong}
+            timeRemaining={autoDJ.timeRemaining}
+            startAutoDJ={autoDJ.startAutoDJ}
+            stopAutoDJ={autoDJ.stopAutoDJ}
+            skipToNext={autoDJ.skipToNext}
+            updateTransitionDuration={autoDJ.updateTransitionDuration}
+            updateCrossfadeSpeed={autoDJ.updateCrossfadeSpeed}
           />
 
           {/* Main DJ Interface */}
