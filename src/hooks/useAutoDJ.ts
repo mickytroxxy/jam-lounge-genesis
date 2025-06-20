@@ -52,22 +52,108 @@ export const useAutoDJ = ({
   const monitorIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const bidClearingTrackerRef = useRef<Set<string>>(new Set()); // Track which songs have had bid clearing triggered
 
-  // Sort songs by bid priority (same as Music Library)
-  const sortedSongs = [...songs].sort((a, b) => {
-    const bidA = a.currentBid || 0;
-    const bidB = b.currentBid || 0;
-    if (bidA !== bidB) {
-      return bidB - bidA; // Higher bids first
+  // Smart queue management for dynamic bid updates
+  const createDynamicQueue = useCallback(() => {
+    if (!autoDJState.isEnabled) {
+      // If Auto DJ is not enabled, just return sorted songs
+      return [...songs].sort((a, b) => {
+        const bidA = a.currentBid || 0;
+        const bidB = b.currentBid || 0;
+        if (bidA !== bidB) {
+          return bidB - bidA; // Higher bids first
+        }
+        return a.title.localeCompare(b.title); // Then alphabetical
+      });
     }
-    return a.title.localeCompare(b.title); // Then alphabetical
-  });
+
+    // Get currently playing song
+    const currentPlayingSong = autoDJState.activeDeck === 'A' ? deckA.currentTrack : deckB.currentTrack;
+    const nextLoadedSong = autoDJState.activeDeck === 'A' ? deckB.currentTrack : deckA.currentTrack;
+
+    // Separate songs into categories
+    const currentlyPlaying = currentPlayingSong ? [currentPlayingSong] : [];
+    const nextLoaded = nextLoadedSong && nextLoadedSong.id !== currentPlayingSong?.id ? [nextLoadedSong] : [];
+
+    // Get all other songs (not currently playing or loaded)
+    const otherSongs = songs.filter(song =>
+      song.id !== currentPlayingSong?.id &&
+      song.id !== nextLoadedSong?.id
+    );
+
+    // Sort other songs by bid priority
+    const sortedOtherSongs = otherSongs.sort((a, b) => {
+      const bidA = a.currentBid || 0;
+      const bidB = b.currentBid || 0;
+      if (bidA !== bidB) {
+        return bidB - bidA; // Higher bids first
+      }
+      return a.title.localeCompare(b.title); // Then alphabetical
+    });
+
+    // Check if next loaded song should be bumped by higher bids
+    let finalQueue: any[] = [];
+
+    if (currentlyPlaying.length > 0) {
+      finalQueue.push(currentlyPlaying[0]);
+
+      // Check if any other song has higher bid than next loaded song
+      if (nextLoaded.length > 0) {
+        const nextLoadedBid = nextLoaded[0].currentBid || 0;
+        const higherBidSongs = sortedOtherSongs.filter(song => (song.currentBid || 0) > nextLoadedBid);
+
+        if (higherBidSongs.length > 0) {
+          console.log(`🚨 QUEUE UPDATE: ${higherBidSongs.length} songs with higher bids than next loaded song`);
+          console.log(`📊 Next loaded: "${nextLoaded[0].title}" (${nextLoadedBid}), Highest new bid: "${higherBidSongs[0].title}" (${higherBidSongs[0].currentBid})`);
+
+          // Add higher bid songs first, then next loaded, then remaining
+          finalQueue = [
+            ...currentlyPlaying,
+            ...higherBidSongs,
+            ...nextLoaded,
+            ...sortedOtherSongs.filter(song => (song.currentBid || 0) <= nextLoadedBid)
+          ];
+        } else {
+          // No higher bids, keep next loaded song in position
+          finalQueue = [
+            ...currentlyPlaying,
+            ...nextLoaded,
+            ...sortedOtherSongs
+          ];
+        }
+      } else {
+        // No next loaded song, just add sorted other songs
+        finalQueue = [
+          ...currentlyPlaying,
+          ...sortedOtherSongs
+        ];
+      }
+    } else {
+      // No currently playing song, just return sorted songs
+      finalQueue = [...songs].sort((a, b) => {
+        const bidA = a.currentBid || 0;
+        const bidB = b.currentBid || 0;
+        if (bidA !== bidB) {
+          return bidB - bidA;
+        }
+        return a.title.localeCompare(b.title);
+      });
+    }
+
+    return finalQueue;
+  }, [songs, autoDJState, deckA.currentTrack, deckB.currentTrack]);
+
+  // Get dynamic queue
+  const sortedSongs = createDynamicQueue();
 
   // Debug logging for songs
-  console.log(`🎵 Auto DJ Hook - Raw songs: ${songs.length}, Sorted songs: ${sortedSongs.length}`);
+  console.log(`🎵 Auto DJ Hook - Raw songs: ${songs.length}, Dynamic queue: ${sortedSongs.length}`);
   if (sortedSongs.length > 0) {
-    console.log(`🎵 First song: "${sortedSongs[0]?.title}" (Bid: ${sortedSongs[0]?.currentBid || 0})`);
+    console.log(`🎵 Queue #1: "${sortedSongs[0]?.title}" (Bid: ${sortedSongs[0]?.currentBid || 0})`);
     if (sortedSongs.length > 1) {
-      console.log(`🎵 Second song: "${sortedSongs[1]?.title}" (Bid: ${sortedSongs[1]?.currentBid || 0})`);
+      console.log(`🎵 Queue #2: "${sortedSongs[1]?.title}" (Bid: ${sortedSongs[1]?.currentBid || 0})`);
+    }
+    if (sortedSongs.length > 2) {
+      console.log(`🎵 Queue #3: "${sortedSongs[2]?.title}" (Bid: ${sortedSongs[2]?.currentBid || 0})`);
     }
   }
 
@@ -98,6 +184,57 @@ export const useAutoDJ = ({
       console.log(`ℹ️ ${context}: No bid to clear for ${song.title}`);
     }
   }, [handleSongUpdate]);
+
+  // Handle queue updates when new bids come in
+  const handleQueueUpdate = useCallback(() => {
+    if (!autoDJState.isEnabled || autoDJState.isTransitioning) return;
+
+    const currentPlayingSong = autoDJState.activeDeck === 'A' ? deckA.currentTrack : deckB.currentTrack;
+    const nextLoadedSong = autoDJState.activeDeck === 'A' ? deckB.currentTrack : deckA.currentTrack;
+
+    if (!currentPlayingSong) return;
+
+    // Find current song in new queue
+    const newCurrentIndex = sortedSongs.findIndex(song => song.id === currentPlayingSong.id);
+    if (newCurrentIndex === -1) return;
+
+    // Check if next song has changed due to new bids
+    const newNextIndex = newCurrentIndex + 1 < sortedSongs.length ? newCurrentIndex + 1 : 0;
+    const newNextSong = sortedSongs[newNextIndex];
+
+    // If next song changed and it's different from what's loaded
+    if (newNextSong && nextLoadedSong && newNextSong.id !== nextLoadedSong.id) {
+      console.log(`🔄 QUEUE UPDATE DETECTED!`);
+      console.log(`📊 Old next: "${nextLoadedSong.title}" (${nextLoadedSong.currentBid || 0})`);
+      console.log(`📊 New next: "${newNextSong.title}" (${newNextSong.currentBid || 0})`);
+
+      // Load new next song to inactive deck
+      const inactiveDeck = autoDJState.activeDeck === 'A' ? 'B' : 'A';
+      console.log(`📀 Loading new next song "${newNextSong.title}" to Deck ${inactiveDeck}`);
+
+      setTimeout(() => {
+        if (inactiveDeck === 'A') {
+          loadTrackToDeckA(newNextSong);
+        } else {
+          loadTrackToDeckB(newNextSong);
+        }
+      }, 500);
+
+      // Update indices
+      setAutoDJState(prev => ({
+        ...prev,
+        currentSongIndex: newCurrentIndex,
+        nextSongIndex: newNextIndex
+      }));
+    }
+  }, [autoDJState, deckA.currentTrack, deckB.currentTrack, sortedSongs, loadTrackToDeckA, loadTrackToDeckB]);
+
+  // Monitor for queue changes (new bids)
+  useEffect(() => {
+    if (autoDJState.isEnabled && !autoDJState.isTransitioning) {
+      handleQueueUpdate();
+    }
+  }, [songs, handleQueueUpdate]); // Trigger when songs array changes (new bids)
 
   // Get current and next songs from sorted list
   const currentSong = sortedSongs[autoDJState.currentSongIndex];
@@ -294,7 +431,10 @@ export const useAutoDJ = ({
 
     // Start playing the next deck immediately for seamless overlap
     console.log(`▶️ Starting playback on Deck ${nextDeck} for seamless transition`);
-    const nextSongToPlay = sortedSongs[autoDJState.nextSongIndex];
+
+    // Get the actual next song that's loaded on the inactive deck
+    const nextSongToPlay = nextDeck === 'A' ? deckA.currentTrack : deckB.currentTrack;
+    console.log(`🎵 Next song to play: "${nextSongToPlay?.title}" (Bid: ${nextSongToPlay?.currentBid || 0})`);
 
     if (nextDeck === 'B' && !deckB.isPlaying) {
       toggleDeckB(); // Start immediately, no delay

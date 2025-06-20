@@ -1,5 +1,5 @@
-import React from 'react';
-import { Play, Pause, SkipForward, Settings, Music, Shuffle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, SkipForward, Settings, Music, Shuffle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 
@@ -26,11 +26,28 @@ const AutoDJPanel: React.FC<AutoDJPanelProps> = ({
   updateTransitionDuration,
   updateCrossfadeSpeed
 }) => {
+  const [lastNextSong, setLastNextSong] = useState<any>(null);
+  const [showQueueUpdate, setShowQueueUpdate] = useState(false);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Detect queue changes
+  useEffect(() => {
+    if (autoDJState.isEnabled && nextSong && lastNextSong && nextSong.id !== lastNextSong.id) {
+      console.log(`🔔 Queue updated: "${lastNextSong.title}" → "${nextSong.title}"`);
+      setShowQueueUpdate(true);
+
+      // Hide notification after 5 seconds
+      setTimeout(() => {
+        setShowQueueUpdate(false);
+      }, 5000);
+    }
+    setLastNextSong(nextSong);
+  }, [nextSong, lastNextSong, autoDJState.isEnabled]);
 
   return (
     <div className="glass-card p-4 animate-fade-in-up font-montserrat-light">
@@ -57,6 +74,18 @@ const AutoDJPanel: React.FC<AutoDJPanelProps> = ({
           />
         </div>
       </div>
+
+      {/* Queue Update Notification */}
+      {showQueueUpdate && (
+        <div className="mb-4 p-3 bg-yellow-500/20 rounded-lg border border-yellow-500/50 animate-pulse">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-yellow-400" />
+            <span className="text-yellow-300 text-sm font-montserrat-bold">
+              Queue Updated! Higher bid moved to next position.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Status Display */}
       <div className="mb-4">
