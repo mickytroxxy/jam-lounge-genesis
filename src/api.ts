@@ -150,6 +150,22 @@ export const getUserDetailsByUserId = async (userId: string): Promise<any[]> => 
   }
 };
 
+export const getSongById = async (songId: string): Promise<any | null> => {
+  try {
+    const docRef = doc(db, 'music', songId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    } else {
+      console.log(`No song found with ID: ${songId}`);
+      return null;
+    }
+  } catch (e) {
+    console.error('Error fetching song by ID:', e);
+    return null;
+  }
+};
+
 export const uploadMusic = async (file: string, path: string, mimeType:string): Promise<string> => {
   const storage = getStorage(app);
   const fileRef = ref(storage, path);

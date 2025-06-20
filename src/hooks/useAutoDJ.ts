@@ -145,8 +145,13 @@ export const useAutoDJ = ({
   // Get dynamic queue
   const sortedSongs = createDynamicQueue();
 
-  // Debug logging for songs
+  // Debug logging for songs and bid clearing
   console.log(`🎵 Auto DJ Hook - Raw songs: ${songs.length}, Dynamic queue: ${sortedSongs.length}`);
+
+  // Debug bid information in Auto DJ
+  const songsWithBids = songs.filter(song => song.currentBid && song.currentBid > 0);
+  console.log(`💰 Auto DJ: ${songsWithBids.length} songs with active bids`);
+
   if (sortedSongs.length > 0) {
     console.log(`🎵 Queue #1: "${sortedSongs[0]?.title}" (Bid: ${sortedSongs[0]?.currentBid || 0})`);
     if (sortedSongs.length > 1) {

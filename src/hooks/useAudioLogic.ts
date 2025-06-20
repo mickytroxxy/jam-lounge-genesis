@@ -1,6 +1,4 @@
-import { createData, getUserDetailsByUserId, updateTable } from "@/api";
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/api';
+import { createData, getUserDetailsByUserId, updateTable, getSongById } from "@/api";
 import { useAppSelector } from "@/store/hooks";
 import { setAccountInfo } from "@/store/slices/accountInfo";
 import { Song } from "@/Types";
@@ -58,13 +56,12 @@ export const useAudioLogic = (songs: Song[] = []) => {
                 console.log(`⏰ 45 seconds elapsed - attempting to clear bid for: ${song.title}`);
 
                 // Get fresh song data from database to check current state
-                const docRef = doc(db, 'music', song.id);
-                const docSnap = await getDoc(docRef);
-                const freshSongData = docSnap.exists() ? docSnap.data() : null;
+                const freshSongData = await getSongById(song.id);
 
                 if (freshSongData && (freshSongData.isPlaying || freshSongData.DJCurrentSong)) {
                     console.log(`🎵 Song ${song.title} is still playing - clearing bid now`);
 
+                    // Update the database to clear the bid
                     await updateTable('music', song.id, {
                         ...freshSongData,
                         currentBiders: [],
@@ -72,6 +69,9 @@ export const useAudioLogic = (songs: Song[] = []) => {
                         lastUpdated: Date.now()
                     });
 
+                    console.log(`🗄️ Database updated - bid cleared for: ${song.title}`);
+
+                    // Process the payment to DJ
                     const totalBid = (song?.currentBid || 0) * (secrets?.bidShare || 0.5);
                     const transactionSuccess = await handleTransaction({
                         amount: totalBid,
@@ -83,6 +83,11 @@ export const useAudioLogic = (songs: Song[] = []) => {
 
                     if (transactionSuccess) {
                         console.log(`✅ Bid cleared automatically for: ${song.title} after 45 seconds. DJ received ${totalBid} tokens.`);
+
+                        // Force a small delay to ensure database update propagates
+                        setTimeout(() => {
+                            console.log(`🔄 Bid clearing completed for: ${song.title} - UI should update shortly`);
+                        }, 1000);
                     } else {
                         console.error(`❌ Failed to transfer bid share for: ${song.title}`);
                     }
@@ -123,9 +128,13 @@ export const useAudioLogic = (songs: Song[] = []) => {
                 currentPosition: position
             });
 
-            // Update the current song in database
+            // Get fresh song data to avoid overwriting cleared bids
+            const freshCurrentSongData = await getSongById(song.id) || song;
+            console.log(`🔄 Updating current song "${song.title}" - Fresh bid: ${freshCurrentSongData.currentBid || 0}, Stale bid: ${song.currentBid || 0}`);
+
+            // Update the current song in database with fresh data
             await updateTable('music', song.id, {
-                ...song,
+                ...freshCurrentSongData,
                 DJCurrentSong: action === 'play',
                 action,
                 isPlaying: action === 'play',
@@ -144,19 +153,43 @@ export const useAudioLogic = (songs: Song[] = []) => {
 
             // Stop all other songs if this one is playing
             if (action === 'play') {
-                const otherSongUpdates = songs
-                    .filter(s => s.id !== song.id && (s.isPlaying || s.DJCurrentSong))
-                    .map(s => updateTable('music', s.id, {
-                        ...s,
-                        DJCurrentSong: false,
-                        action: 'stop',
-                        isPlaying: false,
-                        currentPosition: 0
-                    }));
+                const otherPlayingSongs = songs.filter(s => s.id !== song.id && (s.isPlaying || s.DJCurrentSong));
 
-                if (otherSongUpdates.length > 0) {
+                if (otherPlayingSongs.length > 0) {
+                    console.log(`🛑 Stopping ${otherPlayingSongs.length} other songs - fetching fresh data to preserve bids`);
+
+                    // Fetch fresh data for each song to avoid overwriting cleared bids
+                    const otherSongUpdates = otherPlayingSongs.map(async (s) => {
+                        try {
+                            // Get fresh song data from database
+                            const freshSongData = await getSongById(s.id) || s;
+
+                            console.log(`🔄 Stopping "${s.title}" - Fresh bid: ${freshSongData.currentBid || 0}, Stale bid: ${s.currentBid || 0}`);
+
+                            // Update with fresh data, only changing playback state
+                            return updateTable('music', s.id, {
+                                ...freshSongData,
+                                DJCurrentSong: false,
+                                action: 'stop',
+                                isPlaying: false,
+                                currentPosition: 0,
+                                lastUpdated: Date.now()
+                            });
+                        } catch (error) {
+                            console.error(`Failed to fetch fresh data for ${s.title}:`, error);
+                            // Fallback: only update playback fields, don't touch bid data
+                            return updateTable('music', s.id, {
+                                DJCurrentSong: false,
+                                action: 'stop',
+                                isPlaying: false,
+                                currentPosition: 0,
+                                lastUpdated: Date.now()
+                            });
+                        }
+                    });
+
                     await Promise.all(otherSongUpdates);
-                    console.log(`🛑 Stopped ${otherSongUpdates.length} other songs`);
+                    console.log(`✅ Stopped ${otherPlayingSongs.length} other songs with preserved bid data`);
                 }
             }
 

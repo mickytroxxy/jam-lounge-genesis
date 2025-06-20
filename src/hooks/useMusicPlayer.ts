@@ -135,6 +135,17 @@ export const useMusicPlayer = () => {
         dispatch(setDJSongs(songs));
         dispatch(setLoadingSongs(false));
         console.log('Loaded', songs.length, 'DJ songs');
+
+        // Debug bid information
+        const songsWithBids = songs.filter(song => song.currentBid && song.currentBid > 0);
+        if (songsWithBids.length > 0) {
+          console.log(`💰 Songs with bids: ${songsWithBids.length}`);
+          songsWithBids.forEach(song => {
+            console.log(`  - "${song.title}": ${song.currentBid} tokens`);
+          });
+        } else {
+          console.log('💰 No songs with active bids');
+        }
       });
     } catch (error) {
       console.error('Error calling getDJSongs:', error);
