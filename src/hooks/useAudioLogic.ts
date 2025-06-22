@@ -1,4 +1,4 @@
-import { createData, getUserDetailsByUserId, updateTable, getSongById } from "@/api";
+import { createData, getUserDetailsByUserId, updateTable, getSongById, deleteData } from "@/api";
 import { useAppSelector } from "@/store/hooks";
 import { setAccountInfo } from "@/store/slices/accountInfo";
 import { Song } from "@/Types";
@@ -85,6 +85,9 @@ export const useAudioLogic = (songs: Song[] = []) => {
                         console.log(`✅ Bid cleared automatically for: ${song.title} after 45 seconds. DJ received ${totalBid} tokens.`);
 
                         // Force a small delay to ensure database update propagates
+                        if(song?.isSuggested){
+                            await deleteData('music',song?.id)
+                        }
                         setTimeout(() => {
                             console.log(`🔄 Bid clearing completed for: ${song.title} - UI should update shortly`);
                         }, 1000);

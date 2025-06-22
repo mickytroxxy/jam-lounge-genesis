@@ -28,11 +28,8 @@ const MixerPanel: React.FC<MixerPanelProps> = ({
   updateMasterVolume,
   syncBPM,
   unsyncBPM,
-  playSoundEffect,
   deckAEffects,
-  updateDeckAEffects,
-  updateDeckADelay,
-  updateDeckAReverb,
+  updateDeckAEffects
 }) => {
   // Enhanced sound effects with play/pause
   const { soundEffects, toggleEffect, stopAllEffects } = useSoundEffects();

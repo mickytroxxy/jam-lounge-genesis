@@ -113,6 +113,7 @@ export interface BaseSong {
   originalTrackId?:string;
   fingerprint?:string;
   isOwnershipApproved?:boolean;
+  isSuggested:boolean
 }
 
 export interface Song extends BaseSong {
