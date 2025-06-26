@@ -109,7 +109,14 @@ const VirtualDJ = () => {
     };
   }, [playSoundEffect]);
 
-
+  // Prevent scrolling when VirtualDJ is mounted
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   // Enhanced toggle functions that update song status
   const enhancedToggleDeckA = async () => {
@@ -187,7 +194,7 @@ const VirtualDJ = () => {
           <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-float" style={{animationDelay: '4s'}}></div>
         </div>
 
-        <div className="relative z-10">
+        <div className="relative z-10 flex flex-col h-screen">
           {/* Header */}
           <DJHeader
             discoLightsEnabled={discoLightsEnabled}
@@ -204,75 +211,82 @@ const VirtualDJ = () => {
           />
 
           {/* Main DJ Interface */}
-          <div className="container mx-auto px-6">
-            <div className="grid lg:grid-cols-4 gap-4 mb-6 h-[calc(100vh-12rem)]">
-              
+          <div className="flex-1 h-0 px-6">
+            <div className="grid lg:grid-cols-4 gap-4 h-full">
               {/* Left Deck */}
-              <DeckA
-                deckA={deckA}
-                bpmA={bpmA}
-                deckAEQ={deckAEQ}
-                deckAEffects={deckAEffects}
-                toggleDeckA={enhancedToggleDeckA}
-                updateDeckAVolume={updateDeckAVolume}
-                updateDeckAEQ={updateDeckAEQ}
-                toggleDeckAReverb={toggleDeckAReverb}
-                toggleDeckAEcho={toggleDeckAEcho}
-                setLoopIn={setDeckALoopIn}
-                setLoopOut={setDeckALoopOut}
-                toggleLoop={toggleDeckALoop}
-                setCuePoint={setDeckACuePoint}
-                jumpToCue={jumpToDeckACue}
-                beatJump={beatJumpDeckA}
-                discoLightsEnabled={discoLightsEnabled}
-              />
+              <div className="h-full overflow-auto hide-scrollbar rounded-[5px]">
+                <DeckA
+                  deckA={deckA}
+                  bpmA={bpmA}
+                  deckAEQ={deckAEQ}
+                  deckAEffects={deckAEffects}
+                  toggleDeckA={enhancedToggleDeckA}
+                  updateDeckAVolume={updateDeckAVolume}
+                  updateDeckAEQ={updateDeckAEQ}
+                  toggleDeckAReverb={toggleDeckAReverb}
+                  toggleDeckAEcho={toggleDeckAEcho}
+                  setLoopIn={setDeckALoopIn}
+                  setLoopOut={setDeckALoopOut}
+                  toggleLoop={toggleDeckALoop}
+                  setCuePoint={setDeckACuePoint}
+                  jumpToCue={jumpToDeckACue}
+                  beatJump={beatJumpDeckA}
+                  discoLightsEnabled={discoLightsEnabled}
+                />
+              </div>
 
               {/* Center Mixer */}
-              <MixerPanel
-                crossfader={crossfader}
-                masterVolume={masterVolume}
-                isSynced={isSynced || false}
-                updateCrossfader={updateCrossfader}
-                updateMasterVolume={updateMasterVolume}
-                syncBPM={syncBPM}
-                unsyncBPM={unsyncBPM}
-                playSoundEffect={playSoundEffect}
-                deckAEffects={deckAEffects}
-                updateDeckAEffects={updateDeckAEffects}
-                updateDeckADelay={updateDeckADelay}
-                updateDeckAReverb={updateDeckAReverb}
-              />
+              <div className="h-full overflow-auto hide-scrollbar rounded-[5px]">
+                <MixerPanel
+                  crossfader={crossfader}
+                  masterVolume={masterVolume}
+                  isSynced={isSynced || false}
+                  updateCrossfader={updateCrossfader}
+                  updateMasterVolume={updateMasterVolume}
+                  syncBPM={syncBPM}
+                  unsyncBPM={unsyncBPM}
+                  playSoundEffect={playSoundEffect}
+                  deckAEffects={deckAEffects}
+                  updateDeckAEffects={updateDeckAEffects}
+                  updateDeckADelay={updateDeckADelay}
+                  updateDeckAReverb={updateDeckAReverb}
+                />
+              </div>
 
               {/* Music Library */}
-              <MusicLibrary
-                songs={djSongs || []}
-                isLoadingSongs={isLoadingSongs}
-                loadTrackToDeckA={loadTrackToDeckA}
-                loadTrackToDeckB={loadTrackToDeckB}
-              />
+              <div className="h-full overflow-auto hide-scrollbar rounded-[5px]">
+                <MusicLibrary
+                  songs={djSongs || []}
+                  isLoadingSongs={isLoadingSongs}
+                  loadTrackToDeckA={loadTrackToDeckA}
+                  loadTrackToDeckB={loadTrackToDeckB}
+                />
+              </div>
 
               {/* Right Deck */}
-              <DeckB
-                deckB={deckB}
-                bpmB={bpmB}
-                deckBEQ={deckBEQ}
-                deckBEffects={deckBEffects}
-                toggleDeckB={enhancedToggleDeckB}
-                updateDeckBVolume={updateDeckBVolume}
-                updateDeckBEQ={updateDeckBEQ}
-                updateDeckBEffects={updateDeckBEffects}
-                updateDeckBDelay={updateDeckBDelay}
-                updateDeckBReverb={updateDeckBReverb}
-                toggleDeckBReverb={toggleDeckBReverb}
-                toggleDeckBEcho={toggleDeckBEcho}
-                setLoopIn={setDeckBLoopIn}
-                setLoopOut={setDeckBLoopOut}
-                toggleLoop={toggleDeckBLoop}
-                setCuePoint={setDeckBCuePoint}
-                jumpToCue={jumpToDeckBCue}
-                beatJump={beatJumpDeckB}
-                discoLightsEnabled={discoLightsEnabled}
-              />
+              <div className="h-full overflow-auto hide-scrollbar rounded-[5px]">
+                <DeckB
+                  deckB={deckB}
+                  bpmB={bpmB}
+                  deckBEQ={deckBEQ}
+                  deckBEffects={deckBEffects}
+                  toggleDeckB={enhancedToggleDeckB}
+                  updateDeckBVolume={updateDeckBVolume}
+                  updateDeckBEQ={updateDeckBEQ}
+                  updateDeckBEffects={updateDeckBEffects}
+                  updateDeckBDelay={updateDeckBDelay}
+                  updateDeckBReverb={updateDeckBReverb}
+                  toggleDeckBReverb={toggleDeckBReverb}
+                  toggleDeckBEcho={toggleDeckBEcho}
+                  setLoopIn={setDeckBLoopIn}
+                  setLoopOut={setDeckBLoopOut}
+                  toggleLoop={toggleDeckBLoop}
+                  setCuePoint={setDeckBCuePoint}
+                  jumpToCue={jumpToDeckBCue}
+                  beatJump={beatJumpDeckB}
+                  discoLightsEnabled={discoLightsEnabled}
+                />
+              </div>
             </div>
           </div>
         </div>

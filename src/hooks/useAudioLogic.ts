@@ -73,7 +73,7 @@ export const useAudioLogic = (songs: Song[] = []) => {
 
                     // Process the payment to DJ
                     const totalBid = (song?.currentBid || 0) * (secrets?.bidShare || 0.5);
-                    const transactionSuccess = await handleTransaction({
+                    await handleTransaction({
                         amount: totalBid,
                         receiver: accountInfo?.userId || '',
                         sender: secrets?.appId || '',
@@ -81,18 +81,8 @@ export const useAudioLogic = (songs: Song[] = []) => {
                         description: `Bid Share for ${song.title}`
                     });
 
-                    if (transactionSuccess) {
-                        console.log(`✅ Bid cleared automatically for: ${song.title} after 45 seconds. DJ received ${totalBid} tokens.`);
-
-                        // Force a small delay to ensure database update propagates
-                        if(song?.isSuggested){
-                            await deleteData('music',song?.id)
-                        }
-                        setTimeout(() => {
-                            console.log(`🔄 Bid clearing completed for: ${song.title} - UI should update shortly`);
-                        }, 1000);
-                    } else {
-                        console.error(`❌ Failed to transfer bid share for: ${song.title}`);
+                    if(song?.isSuggested){
+                        await deleteData('music',song?.id)
                     }
                 } else {
                     console.log(`⚠️ Song ${song.title} is no longer playing, skipping bid clear`);

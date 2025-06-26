@@ -38,6 +38,9 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
     isLoading: false
   });
 
+  // Search state for filtering tracks
+  const [search, setSearch] = useState('');
+
   // Handle cancel bid click
   const handleCancelBidClick = (song: Song) => {
     setConfirmationDialog({
@@ -95,15 +98,19 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
         </h3>
       </div>
 
-      {/* Instructions */}
+      {/* Instructions (replaced with search) */}
       <div className="pt-3 border-t border-green-700 mb-4">
-        <p className="text-xs text-gray-400 font-montserrat-light">
-          Click A or B to load to deck
-        </p>
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search tracks..."
+          className="w-full px-3 py-2 rounded bg-gray-800 text-white text-xs border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
       </div>
 
       {/* Song List - Scrollable */}
-      <div className="overflow-hidden" style={{height: 720}}>
+      <div className="overflow-hidden">
         <div className="space-y-2 h-full overflow-y-auto custom-scrollbar pr-2">
         {isLoadingSongs ? (
           <div className="text-center py-8">
@@ -118,6 +125,10 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
         ) : (
           // Sort songs by currentBid (highest first), then by title
           [...songs]
+            .filter(song =>
+              song.title.toLowerCase().includes(search.toLowerCase()) ||
+              song.artist.toLowerCase().includes(search.toLowerCase())
+            )
             .sort((a, b) => {
               const bidA = a.currentBid || 0;
               const bidB = b.currentBid || 0;

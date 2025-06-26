@@ -52,6 +52,13 @@ export const useAutoDJ = ({
   const monitorIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const bidClearingTrackerRef = useRef<Set<string>>(new Set()); // Track which songs have had bid clearing triggered
 
+  // --- Audible Playback Time Tracking for Bid Clearing ---
+  // This effect tracks the actual audible playback time for the current song on the active deck
+  // and only clears the bid after 45 seconds of playback with volume > 0.05.
+  const playbackTimeRef = useRef(0); // Accumulated audible playback time in seconds
+  const bidClearedRef = useRef<string | null>(null); // Track which song's bid has been cleared
+  const playbackIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Smart queue management for dynamic bid updates
   const createDynamicQueue = useCallback(() => {
     if (!autoDJState.isEnabled) {
@@ -373,6 +380,13 @@ export const useAutoDJ = ({
             if (firstSong && deckA.isPlaying) {
               triggerBidClearing(firstSong, 'Auto DJ Startup');
             }
+            // Now load the next song to Deck B ONLY after Deck A is playing
+            const nextSong = sortedSongs[nextSongIndex];
+            if (nextSong) {
+              console.log(`📀 Loading next song "${nextSong.title}" (Bid: ${nextSong.currentBid || 0}) to Deck B`);
+              loadTrackToDeckB(nextSong); // Only load, do NOT play/toggle Deck B
+              // GUARD: Never call toggleDeckB() or playDeckB() here!
+            }
           }, 1000);
         }
       }, 3000);
@@ -381,6 +395,18 @@ export const useAutoDJ = ({
       if (currentPlayingSong) {
         console.log(`💰 Triggering bid clearing for already playing song: ${currentPlayingSong.title}`);
         triggerBidClearing(currentPlayingSong, 'Auto DJ Current Playing');
+      }
+      // Load next song to the inactive deck as before
+      const inactiveDeck = activeDeck === 'A' ? 'B' : 'A';
+      const nextSong = sortedSongs[nextSongIndex];
+      if (nextSong) {
+        console.log(`📀 Loading next song "${nextSong.title}" (Bid: ${nextSong.currentBid || 0}) to Deck ${inactiveDeck}`);
+        if (inactiveDeck === 'A') {
+          loadTrackToDeckA(nextSong);
+        } else {
+          loadTrackToDeckB(nextSong); // Only load, do NOT play/toggle Deck B
+          // GUARD: Never call toggleDeckB() or playDeckB() here!
+        }
       }
     }
 
@@ -615,6 +641,45 @@ export const useAutoDJ = ({
     };
   }, [autoDJState.isEnabled, autoDJState.isTransitioning, autoDJState.activeDeck, getCurrentTrackTimeRemaining, autoDJState.transitionDuration, startTransition, deckA, deckB]);
 
+  // --- Robust 45s Play Timer for Bid Clearing ---
+  useEffect(() => {
+    if (!autoDJState.isEnabled) return;
+    const activeDeckData = autoDJState.activeDeck === 'A' ? deckA : deckB;
+    const currentSong = sortedSongs[autoDJState.currentSongIndex];
+    if (!activeDeckData?.currentTrack || !currentSong) return;
+
+    // Only run for songs with a bid
+    if (!currentSong.currentBid || currentSong.currentBid <= 0) return;
+
+    // Track play time for this song
+    if (bidClearedRef.current !== currentSong.id) {
+      playbackTimeRef.current = 0;
+      bidClearedRef.current = null;
+    }
+
+    // Clear any previous interval
+    if (playbackIntervalRef.current) {
+      clearInterval(playbackIntervalRef.current);
+    }
+
+    playbackIntervalRef.current = setInterval(() => {
+      if (activeDeckData.isPlaying) {
+        playbackTimeRef.current += 1;
+        if (playbackTimeRef.current >= 45 && bidClearedRef.current !== currentSong.id) {
+          triggerBidClearing(currentSong, '45s Play Timer');
+          bidClearedRef.current = currentSong.id;
+        }
+      }
+    }, 1000);
+
+    return () => {
+      if (playbackIntervalRef.current) {
+        clearInterval(playbackIntervalRef.current);
+        playbackIntervalRef.current = null;
+      }
+    };
+  }, [autoDJState.isEnabled, autoDJState.activeDeck, deckA.currentTrack, deckB.currentTrack, sortedSongs, autoDJState.currentSongIndex, deckA.isPlaying, deckB.isPlaying]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -662,3 +727,5 @@ export const useAutoDJ = ({
     timeRemaining: getCurrentTrackTimeRemaining()
   };
 };
+
+// NOTE: If Deck B still plays automatically, check your Deck B component and audio element for any autoPlay attribute or .play() call on load. Deck B should only play when toggleDeckB() is called during a transition.
