@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Music, Disc, Zap, Waves, RotateCcw, Repeat, Volume2, FastForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DiscoLights from './DiscoLights';
+import { useAudioLogic } from '@/hooks/useAudioLogic';
 
 interface DeckAProps {
   deckA: any;
@@ -53,14 +54,20 @@ const DeckA: React.FC<DeckAProps> = ({
   const [visualizerData, setVisualizerData] = useState<number[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
-
+  const {clearCurrentBid} = useAudioLogic();
   // Vinyl scratching state
   const [isScratching, setIsScratching] = useState(false);
   const [lastMouseY, setLastMouseY] = useState(0);
   const [originalPlaybackRate, setOriginalPlaybackRate] = useState(1);
   const vinylRef = useRef<HTMLDivElement>(null);
 
-  // Generate music visualizer data (simulates frequency analysis)
+
+
+  useEffect(() => {
+    if((deckA?.position > 43) && (deckA?.position < 46) ){
+      clearCurrentBid(deckA?.currentTrack)
+    }
+  },[deckA?.position])
   useEffect(() => {
     if (deckA.isPlaying) {
       const generateVisualizerData = () => {

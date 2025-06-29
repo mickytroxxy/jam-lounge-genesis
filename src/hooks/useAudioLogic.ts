@@ -23,82 +23,34 @@ export const useAudioLogic = (songs: Song[] = []) => {
         currentPosition: 0
     });
 
-    // Track bid clearing timeouts
-    const bidClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const playingStartTimeRef = useRef<number | null>(null);
-
-    // Cleanup timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (bidClearTimeoutRef.current) {
-                clearTimeout(bidClearTimeoutRef.current);
-            }
-        };
-    }, []);
 
     // Clear bid after 45 seconds of playing
-    const clearBidAfterDelay = useCallback(async (song: Song) => {
+    const clearCurrentBid = async (song:Song) => {
         if (!song.currentBid || !song.currentBiders || song.currentBiders.length === 0) {
             console.log(`⚠️ No bid to clear for: ${song.title}`);
             return;
         }
-
-        console.log(`⏰ Starting 45-second timer to clear bid for: ${song.title} (Bid: ${song.currentBid} tokens)`);
-
-        // Clear any existing timeout for this song
-        if (bidClearTimeoutRef.current) {
-            clearTimeout(bidClearTimeoutRef.current);
-            console.log(`🔄 Cleared previous timeout for bid clearing`);
-        }
-
-        bidClearTimeoutRef.current = setTimeout(async () => {
-            try {
-                console.log(`⏰ 45 seconds elapsed - attempting to clear bid for: ${song.title}`);
-
-                // Get fresh song data from database to check current state
-                const freshSongData = await getSongById(song.id);
-
-                if (freshSongData && (freshSongData.isPlaying || freshSongData.DJCurrentSong)) {
-                    console.log(`🎵 Song ${song.title} is still playing - clearing bid now`);
-
-                    // Update the database to clear the bid
-                    await updateTable('music', song.id, {
-                        ...freshSongData,
-                        currentBiders: [],
-                        currentBid: 0,
-                        lastUpdated: Date.now()
-                    });
-
-                    console.log(`🗄️ Database updated - bid cleared for: ${song.title}`);
-
-                    // Process the payment to DJ
-                    const totalBid = (song?.currentBid || 0) * (secrets?.bidShare || 0.5);
-                    await handleTransaction({
-                        amount: totalBid,
-                        receiver: accountInfo?.userId || '',
-                        sender: secrets?.appId || '',
-                        type: 'transfer',
-                        description: `Bid Share for ${song.title}`
-                    });
-
-                    if(song?.isSuggested){
-                        await deleteData('music',song?.id)
-                    }
-                } else {
-                    console.log(`⚠️ Song ${song.title} is no longer playing, skipping bid clear`);
-                }
-
-                // Clear the timeout reference
-                bidClearTimeoutRef.current = null;
-
-            } catch (error) {
-                console.error(`❌ Failed to clear bid automatically for ${song.title}:`, error);
-                bidClearTimeoutRef.current = null;
+        const totalBid = (song?.currentBid || 0) * (secrets?.bidShare || 0.5);
+        const response = await handleTransaction({
+            amount: totalBid,
+            receiver: accountInfo?.userId || '',
+            sender: secrets?.appId || '',
+            type: 'transfer',
+            description: `Bid Share`
+        });
+        if(response){
+            const freshSongData = await getSongById(song.id);
+            await updateTable('music', song.id, {
+                ...freshSongData,
+                currentBiders: [],
+                currentBid: 0,
+                lastUpdated: Date.now()
+            });
+            if(song?.isSuggested){
+                await deleteData('music',song?.id)
             }
-        }, 45000); // 45 seconds
-
-        console.log(`⏰ Timeout set for ${song.title} - will clear in 45 seconds`);
-    }, [secrets?.bidShare, secrets?.appId, accountInfo?.userId]);
+        }
+    }
 
     // Handle song updates (play, pause, stop)
     const handleSongUpdate = useCallback(async (song: Song, action: 'play' | 'pause' | 'stop', position: number = 0) => {
@@ -108,24 +60,12 @@ export const useAudioLogic = (songs: Song[] = []) => {
         }
 
         try {
-            // Clear any existing timeout
-            if (bidClearTimeoutRef.current) {
-                clearTimeout(bidClearTimeoutRef.current);
-                bidClearTimeoutRef.current = null;
-            }
-
-            // Update local state immediately
             setAudioState({
                 currentPlayingSong: action === 'stop' ? null : song,
                 isPlaying: action === 'play',
                 currentPosition: position
             });
-
-            // Get fresh song data to avoid overwriting cleared bids
             const freshCurrentSongData = await getSongById(song.id) || song;
-            console.log(`🔄 Updating current song "${song.title}" - Fresh bid: ${freshCurrentSongData.currentBid || 0}, Stale bid: ${song.currentBid || 0}`);
-
-            // Update the current song in database with fresh data
             await updateTable('music', song.id, {
                 ...freshCurrentSongData,
                 DJCurrentSong: action === 'play',
@@ -134,32 +74,13 @@ export const useAudioLogic = (songs: Song[] = []) => {
                 currentPosition: position,
                 lastUpdated: Date.now()
             });
-
-            console.log(`🎵 Song ${action}: ${song.title} at position ${position}s`);
-
-            // Handle bid clearing for songs with bids when they start playing
-            if (action === 'play' && song.currentBid && song.currentBiders && song.currentBiders.length > 0) {
-                playingStartTimeRef.current = Date.now();
-                console.log(`💰 Song with bid started playing: ${song.title} (${song.currentBid} tokens)`);
-                clearBidAfterDelay(song);
-            }
-
-            // Stop all other songs if this one is playing
             if (action === 'play') {
                 const otherPlayingSongs = songs.filter(s => s.id !== song.id && (s.isPlaying || s.DJCurrentSong));
 
                 if (otherPlayingSongs.length > 0) {
-                    console.log(`🛑 Stopping ${otherPlayingSongs.length} other songs - fetching fresh data to preserve bids`);
-
-                    // Fetch fresh data for each song to avoid overwriting cleared bids
                     const otherSongUpdates = otherPlayingSongs.map(async (s) => {
                         try {
-                            // Get fresh song data from database
                             const freshSongData = await getSongById(s.id) || s;
-
-                            console.log(`🔄 Stopping "${s.title}" - Fresh bid: ${freshSongData.currentBid || 0}, Stale bid: ${s.currentBid || 0}`);
-
-                            // Update with fresh data, only changing playback state
                             return updateTable('music', s.id, {
                                 ...freshSongData,
                                 DJCurrentSong: false,
@@ -169,8 +90,6 @@ export const useAudioLogic = (songs: Song[] = []) => {
                                 lastUpdated: Date.now()
                             });
                         } catch (error) {
-                            console.error(`Failed to fetch fresh data for ${s.title}:`, error);
-                            // Fallback: only update playback fields, don't touch bid data
                             return updateTable('music', s.id, {
                                 DJCurrentSong: false,
                                 action: 'stop',
@@ -180,25 +99,13 @@ export const useAudioLogic = (songs: Song[] = []) => {
                             });
                         }
                     });
-
                     await Promise.all(otherSongUpdates);
-                    console.log(`✅ Stopped ${otherPlayingSongs.length} other songs with preserved bid data`);
                 }
-            }
-
-            // Clear timeout if song is paused or stopped
-            if (action === 'pause' || action === 'stop') {
-                if (bidClearTimeoutRef.current) {
-                    clearTimeout(bidClearTimeoutRef.current);
-                    bidClearTimeoutRef.current = null;
-                    console.log(`⏸️ Bid clearing timer stopped for: ${song.title}`);
-                }
-                playingStartTimeRef.current = null;
             }
         } catch (error) {
             console.error('Failed to update song status:', error);
         }
-    }, [songs, clearBidAfterDelay]);
+    }, [songs]);
 
     // Get current playing song from songs array
     const getCurrentPlayingSong = useCallback(() => {
@@ -316,7 +223,7 @@ export const useAudioLogic = (songs: Song[] = []) => {
         // Actions
         handleSongUpdate,
         cancelBid,
-
+        clearCurrentBid,
         // Getters
         getCurrentPlayingSong,
         isSongPlaying,

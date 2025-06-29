@@ -1515,7 +1515,7 @@ export const useMusicPlayer = () => {
 
   // Log the final state before returning
   console.log('Final musicPlayerState before return:', musicPlayerState);
-
+  
   // Ensure we have a valid state object
   if (!musicPlayerState || typeof musicPlayerState !== 'object') {
     console.error('Invalid musicPlayerState:', musicPlayerState);
