@@ -364,50 +364,20 @@ export const useAutoDJ = ({
 
     console.log(`🎛️ Auto DJ state updated - Active Deck: ${activeDeck}, Current Song Index: ${currentSongIndex}, Next Song Index: ${nextSongIndex}`);
 
-    // If no deck is playing, start the first song
+    // If no deck is playing, just load the first two songs to the decks, do NOT play anything
     if (!deckAPlaying && !deckBPlaying) {
       const firstSong = sortedSongs[currentSongIndex];
-      console.log(`📀 Loading first song "${firstSong.title}" (Bid: ${firstSong.currentBid || 0}) to Deck A`);
-      loadTrackToDeckA(firstSong);
-
-      setTimeout(() => {
-        console.log('▶️ Starting playback on Deck A (first song)');
-        if (!deckA.isPlaying) {
-          toggleDeckA();
-
-          // Trigger bid clearing for the first song
-          setTimeout(() => {
-            if (firstSong && deckA.isPlaying) {
-              triggerBidClearing(firstSong, 'Auto DJ Startup');
-            }
-            // Now load the next song to Deck B ONLY after Deck A is playing
-            const nextSong = sortedSongs[nextSongIndex];
-            if (nextSong) {
-              console.log(`📀 Loading next song "${nextSong.title}" (Bid: ${nextSong.currentBid || 0}) to Deck B`);
-              loadTrackToDeckB(nextSong); // Only load, do NOT play/toggle Deck B
-              // GUARD: Never call toggleDeckB() or playDeckB() here!
-            }
-          }, 1000);
-        }
-      }, 3000);
-    } else {
-      // A deck is already playing, trigger bid clearing for current song
-      if (currentPlayingSong) {
-        console.log(`💰 Triggering bid clearing for already playing song: ${currentPlayingSong.title}`);
-        triggerBidClearing(currentPlayingSong, 'Auto DJ Current Playing');
-      }
-      // Load next song to the inactive deck as before
-      const inactiveDeck = activeDeck === 'A' ? 'B' : 'A';
       const nextSong = sortedSongs[nextSongIndex];
-      if (nextSong) {
-        console.log(`📀 Loading next song "${nextSong.title}" (Bid: ${nextSong.currentBid || 0}) to Deck ${inactiveDeck}`);
-        if (inactiveDeck === 'A') {
-          loadTrackToDeckA(nextSong);
-        } else {
-          loadTrackToDeckB(nextSong); // Only load, do NOT play/toggle Deck B
-          // GUARD: Never call toggleDeckB() or playDeckB() here!
-        }
+      if (firstSong) {
+        console.log(`📀 Loading first song "${firstSong.title}" (Bid: ${firstSong.currentBid || 0}) to Deck A`);
+        loadTrackToDeckA(firstSong);
       }
+      if (nextSong) {
+        console.log(`📀 Loading next song "${nextSong.title}" (Bid: ${nextSong.currentBid || 0}) to Deck B`);
+        loadTrackToDeckB(nextSong);
+      }
+      // Do NOT play or toggle any deck here. User must press play manually.
+      return;
     }
 
   }, [sortedSongs, loadTrackToDeckA, loadTrackToDeckB, updateCrossfader, toggleDeckA, deckA, deckB, triggerBidClearing]);
@@ -579,6 +549,9 @@ export const useAutoDJ = ({
       console.log('🔄 Auto DJ monitoring paused - transition in progress');
       return;
     }
+
+    // GUARD: Only monitor if a deck is actually playing
+    if (!deckA.isPlaying && !deckB.isPlaying) return;
 
     console.log(`🎵 Auto DJ monitoring started for Deck ${autoDJState.activeDeck}`);
     console.log(`🔍 Monitoring setup - Active Deck: ${autoDJState.activeDeck}, Current Song: ${autoDJState.currentSongIndex}, Next Song: ${autoDJState.nextSongIndex}`);
