@@ -168,14 +168,22 @@ export const useDiscoLights = (isPlaying: boolean, deckId: 'A' | 'B') => {
         colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
       }
       
-      // Update state
-      setDiscoState({
-        isActive: intensity > 0.1, // Only activate if there's significant audio
-        colors,
-        intensity,
-        bassLevel,
-        midLevel,
-        trebleLevel
+      // Update state only if there's a significant change to reduce re-renders
+      const newIntensity = intensity > 0.05 ? intensity : 0;
+
+      setDiscoState(prevState => {
+        // Only update if intensity changed significantly (reduces re-renders)
+        if (Math.abs(prevState.intensity - newIntensity) > 0.05) {
+          return {
+            isActive: newIntensity > 0.05,
+            colors,
+            intensity: newIntensity,
+            bassLevel,
+            midLevel,
+            trebleLevel
+          };
+        }
+        return prevState;
       });
       
       return colors;
@@ -185,10 +193,15 @@ export const useDiscoLights = (isPlaying: boolean, deckId: 'A' | 'B') => {
     }
   }, []);
 
-  // Animation loop
-  const animate = useCallback(() => {
+  // Animation loop with throttling for better performance
+  const lastFrameTimeRef = useRef(0);
+  const animate = useCallback((currentTime: number) => {
     if (isPlaying && analyserRef.current) {
-      generateDiscoColors();
+      // Throttle to ~15fps instead of 60fps for much better performance
+      if (currentTime - lastFrameTimeRef.current >= 66) {
+        generateDiscoColors();
+        lastFrameTimeRef.current = currentTime;
+      }
       animationRef.current = requestAnimationFrame(animate);
     }
   }, [isPlaying, generateDiscoColors]);

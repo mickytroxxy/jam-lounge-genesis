@@ -70,19 +70,27 @@ export const updateData = async (tableName: string, docId: string, obj: { field:
     return false;
   }
 };
-export const getDJSongs = async (ownerId:string,type:'ALL' | 'ACTIVE',cb:(...args:any) => void) => {
-
+export const getDJSongs = (ownerId:string,type:'ALL' | 'ACTIVE',cb:(...args:any) => void) => {
   try {
       let q = query(collection(db, "music"), where("ownerId", "==", ownerId));
       if(type === 'ACTIVE'){
         q = query(collection(db, "music"), where("ownerId", "==", ownerId), where("active", "==", true));
       }
-      onSnapshot(q, (querySnapshot) => {
+
+      // Return the unsubscribe function so caller can clean up
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const data = querySnapshot.docs.map(doc => doc.data());
         cb(data)
+      }, (error) => {
+        console.error('Firebase onSnapshot error:', error);
+        cb(error);
       });
+
+      return unsubscribe;
   } catch (e) {
+      console.error('getDJSongs error:', e);
       cb(e);
+      return () => {}; // Return empty cleanup function on error
   }
 }
 export const getCurrentPlayingSongStatus = async (currentPlayingDocId:string,cb:(...args:any) => void) => {

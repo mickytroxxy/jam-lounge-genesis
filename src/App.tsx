@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import VirtualDJ from "./pages/VirtualDJ";
+import SmartTaskPrivacy from "./pages/smarttaskprivacy";
 import LoginModal from "./components/LoginModal";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
                 <Route path="/virtual-dj" element={<VirtualDJ />} />
                 <Route path="/terms" element={<TermsAndConditions />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/smarttaskprivacy" element={<SmartTaskPrivacy />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Song } from '@/Types';
 
 interface AutoDJState {
@@ -58,6 +58,8 @@ export const useAutoDJ = ({
   const playbackTimeRef = useRef(0); // Accumulated audible playback time in seconds
   const bidClearedRef = useRef<string | null>(null); // Track which song's bid has been cleared
   const playbackIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+
 
   // Smart queue management for dynamic bid updates
   const createDynamicQueue = useCallback(() => {
@@ -149,8 +151,10 @@ export const useAutoDJ = ({
     return finalQueue;
   }, [songs, autoDJState, deckA.currentTrack, deckB.currentTrack]);
 
-  // Get dynamic queue
-  const sortedSongs = createDynamicQueue();
+  // Get dynamic queue - memoized to prevent excessive recalculations
+  const sortedSongs = useMemo(() => {
+    return createDynamicQueue();
+  }, [createDynamicQueue]);
 
   // Debug logging for songs and bid clearing
   console.log(`🎵 Auto DJ Hook - Raw songs: ${songs.length}, Dynamic queue: ${sortedSongs.length}`);
@@ -239,14 +243,18 @@ export const useAutoDJ = ({
         nextSongIndex: newNextIndex
       }));
     }
-  }, [autoDJState, deckA.currentTrack, deckB.currentTrack, sortedSongs, loadTrackToDeckA, loadTrackToDeckB]);
+  }, [autoDJState.isEnabled, autoDJState.isTransitioning, autoDJState.activeDeck, deckA.currentTrack, deckB.currentTrack, sortedSongs, loadTrackToDeckA, loadTrackToDeckB]);
 
-  // Monitor for queue changes (new bids)
+  // Monitor for queue changes (new bids) - optimized to only trigger on actual bid changes
+  const songsSignature = useMemo(() => {
+    return songs.map(song => `${song.id}:${song.currentBid || 0}`).join('|');
+  }, [songs]);
+
   useEffect(() => {
     if (autoDJState.isEnabled && !autoDJState.isTransitioning) {
       handleQueueUpdate();
     }
-  }, [songs, handleQueueUpdate]); // Trigger when songs array changes (new bids)
+  }, [songsSignature, handleQueueUpdate]); // Only trigger when bid amounts actually change
 
   // Get current and next songs from sorted list
   const currentSong = sortedSongs[autoDJState.currentSongIndex];
@@ -257,7 +265,7 @@ export const useAutoDJ = ({
   console.log(`🎵 Current Song: "${currentSong?.title}" (Bid: ${currentSong?.currentBid || 0})`);
   console.log(`🎵 Next Song: "${nextSong?.title}" (Bid: ${nextSong?.currentBid || 0})`);
 
-  // Calculate time remaining in current track
+  // Calculate time remaining in current track - optimized dependencies
   const getCurrentTrackTimeRemaining = useCallback(() => {
     const activeDeckData = autoDJState.activeDeck === 'A' ? deckA : deckB;
     if (!activeDeckData?.currentTrack || !activeDeckData?.duration || activeDeckData.duration === 0) {
@@ -536,7 +544,7 @@ export const useAutoDJ = ({
       }
     }, 100); // Update every 100ms for smooth animation
 
-  }, [autoDJState, crossfader, deckA.isPlaying, deckB.isPlaying, toggleDeckA, toggleDeckB, updateCrossfader, sortedSongs, loadTrackToDeckA, loadTrackToDeckB]);
+  }, [autoDJState, crossfader, deckA.isPlaying, deckB.isPlaying, toggleDeckA, toggleDeckB, updateCrossfader, sortedSongs, loadTrackToDeckA, loadTrackToDeckB, triggerBidClearing]);
 
   // Monitor track progress and trigger transitions
   useEffect(() => {
@@ -570,37 +578,36 @@ export const useAutoDJ = ({
       const timeRemaining = getCurrentTrackTimeRemaining();
       const activeDeckData = autoDJState.activeDeck === 'A' ? deckA : deckB;
 
-      // AGGRESSIVE DEBUGGING - Log every check
+      // Monitor track progress and trigger transitions
       if (activeDeckData?.currentTrack) {
         const position = activeDeckData.position || 0;
         const duration = activeDeckData.duration || 0;
-        console.log(`🔍 DEBUG: Deck ${autoDJState.activeDeck} - Position: ${position.toFixed(1)}s, Duration: ${duration.toFixed(1)}s, Remaining: ${timeRemaining.toFixed(1)}s, Threshold: ${autoDJState.transitionDuration}s`);
+        const isPlaying = activeDeckData.isPlaying;
 
-        // Check if position is actually updating
-        if (position > 0) {
-          console.log(`✅ Position is updating - track is playing`);
-        } else {
-          console.log(`⚠️ Position is 0 - track might not be playing`);
+        // Log every 10 seconds to reduce console noise
+        if (Math.floor(position) % 10 === 0 && position > 0) {
+          console.log(`🔍 Auto DJ Monitor: Deck ${autoDJState.activeDeck} - "${activeDeckData.currentTrack.title}" | ${position.toFixed(1)}s/${duration.toFixed(1)}s | ${timeRemaining.toFixed(1)}s remaining`);
         }
       }
 
-      // More aggressive transition trigger - try multiple conditions
+      // Check transition conditions with detailed logging
       const shouldTransition = timeRemaining > 0 && timeRemaining <= autoDJState.transitionDuration;
+      const isEmergency = timeRemaining <= 0 && activeDeckData?.currentTrack && !autoDJState.isTransitioning;
+      const isForceTransition = timeRemaining > 0 && timeRemaining <= 3 && !autoDJState.isTransitioning;
+
+      // Debug transition conditions every check
+      if (timeRemaining <= 20) { // Only log when getting close to transition time
+        console.log(`🎯 TRANSITION CHECK: timeRemaining=${timeRemaining.toFixed(1)}s, threshold=${autoDJState.transitionDuration}s, shouldTransition=${shouldTransition}, isTransitioning=${autoDJState.isTransitioning}`);
+      }
 
       if (shouldTransition) {
         console.log(`🚨 TRANSITION CONDITION MET! ${timeRemaining.toFixed(1)}s <= ${autoDJState.transitionDuration}s`);
         console.log(`⏰ STARTING TRANSITION NOW!`);
         startTransition();
-      }
-
-      // Emergency check - if track ended unexpectedly
-      if (timeRemaining <= 0 && activeDeckData?.currentTrack && !autoDJState.isTransitioning) {
+      } else if (isEmergency) {
         console.log('🚨 EMERGENCY TRANSITION! Track ended unexpectedly');
         startTransition();
-      }
-
-      // Additional check - if we're very close to the end, force transition
-      if (timeRemaining > 0 && timeRemaining <= 3 && !autoDJState.isTransitioning) {
+      } else if (isForceTransition) {
         console.log('🚨 FORCE TRANSITION! Less than 3 seconds remaining');
         startTransition();
       }
@@ -613,6 +620,8 @@ export const useAutoDJ = ({
       }
     };
   }, [autoDJState.isEnabled, autoDJState.isTransitioning, autoDJState.activeDeck, getCurrentTrackTimeRemaining, autoDJState.transitionDuration, startTransition, deckA, deckB]);
+
+
 
   // --- Robust 45s Play Timer for Bid Clearing ---
   useEffect(() => {

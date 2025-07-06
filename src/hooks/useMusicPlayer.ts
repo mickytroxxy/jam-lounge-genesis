@@ -99,8 +99,18 @@ export const useMusicPlayer = () => {
   const deckAConvolverRef = useRef<ConvolverNode | null>(null);
   const deckBConvolverRef = useRef<ConvolverNode | null>(null);
 
+  // Firebase listener cleanup ref
+  const djSongsUnsubscribeRef = useRef<(() => void) | null>(null);
+
   // Load DJ songs when user is authenticated
   const loadDJSongs = useCallback(() => {
+    // Clean up previous listener if it exists
+    if (djSongsUnsubscribeRef.current) {
+      console.log('🧹 Cleaning up previous Firebase listener');
+      djSongsUnsubscribeRef.current();
+      djSongsUnsubscribeRef.current = null;
+    }
+
     if (!isAuthenticated || !user?.userId) {
       dispatch(setDJSongs([]));
       return;
@@ -109,7 +119,8 @@ export const useMusicPlayer = () => {
     dispatch(setLoadingSongs(true));
 
     try {
-      getDJSongs(user.userId, 'ACTIVE', (result: any) => {
+      // Store the unsubscribe function for cleanup
+      djSongsUnsubscribeRef.current = getDJSongs(user.userId, 'ACTIVE', (result: any) => {
         console.log('getDJSongs result:', result);
 
         // Handle different response formats
@@ -1656,4 +1667,17 @@ export const useMusicPlayer = () => {
     testAudioPlayback,
     debugWebAudioState,
   };
+
+  // Cleanup Firebase listeners on unmount
+  useEffect(() => {
+    return () => {
+      if (djSongsUnsubscribeRef.current) {
+        console.log('🧹 Cleaning up Firebase listener on unmount');
+        djSongsUnsubscribeRef.current();
+        djSongsUnsubscribeRef.current = null;
+      }
+    };
+  }, []);
+
+  return musicPlayerReturn;
 };
