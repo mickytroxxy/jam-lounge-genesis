@@ -199,6 +199,39 @@ const musicPlayerSlice = createSlice({
       // Ensure payload is always an array
       state.djSongs = Array.isArray(action.payload) ? action.payload : [];
     },
+
+    // Optimized action to add or update a single song
+    addOrUpdateSong: (state, action: PayloadAction<Song>) => {
+      const newSong = action.payload;
+      const existingIndex = state.djSongs.findIndex(song => song.id === newSong.id);
+
+      if (existingIndex >= 0) {
+        // Update existing song
+        state.djSongs[existingIndex] = newSong;
+      } else {
+        // Add new song at the beginning (for new bids)
+        state.djSongs.unshift(newSong);
+      }
+    },
+
+    // Optimized action to remove a song
+    removeSong: (state, action: PayloadAction<string>) => {
+      state.djSongs = state.djSongs.filter(song => song.id !== action.payload);
+    },
+
+    // Batch update multiple songs efficiently
+    batchUpdateSongs: (state, action: PayloadAction<Song[]>) => {
+      const updates = action.payload;
+      updates.forEach(updatedSong => {
+        const existingIndex = state.djSongs.findIndex(song => song.id === updatedSong.id);
+        if (existingIndex >= 0) {
+          state.djSongs[existingIndex] = updatedSong;
+        } else {
+          state.djSongs.unshift(updatedSong);
+        }
+      });
+    },
+
     setLoadingSongs: (state, action: PayloadAction<boolean>) => {
       state.isLoadingSongs = action.payload;
     },
@@ -274,6 +307,9 @@ export const {
   
   // Music library
   setDJSongs,
+  addOrUpdateSong,
+  removeSong,
+  batchUpdateSongs,
   setLoadingSongs,
   
   // Recording

@@ -93,6 +93,57 @@ export const getDJSongs = (ownerId:string,type:'ALL' | 'ACTIVE',cb:(...args:any)
       return () => {}; // Return empty cleanup function on error
   }
 }
+
+// Optimized version that provides incremental updates
+export const getDJSongsOptimized = (ownerId: string, type: 'ALL' | 'ACTIVE', cb: (changes: {
+  type: 'initial' | 'added' | 'modified' | 'removed';
+  songs: any[];
+  song?: any;
+}) => void) => {
+  try {
+    let q = query(collection(db, "music"), where("ownerId", "==", ownerId));
+    if (type === 'ACTIVE') {
+      q = query(collection(db, "music"), where("ownerId", "==", ownerId), where("active", "==", true));
+    }
+
+    let isInitialLoad = true;
+
+    // Return the unsubscribe function so caller can clean up
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      if (isInitialLoad) {
+        // Initial load - send all songs
+        const allSongs = querySnapshot.docs.map(doc => doc.data());
+        cb({ type: 'initial', songs: allSongs });
+        isInitialLoad = false;
+      } else {
+        // Incremental updates - process individual changes
+        querySnapshot.docChanges().forEach((change) => {
+          const songData = change.doc.data();
+
+          if (change.type === 'added') {
+            console.log('🆕 New song added:', songData.title);
+            cb({ type: 'added', songs: [], song: songData });
+          } else if (change.type === 'modified') {
+            console.log('🔄 Song modified:', songData.title);
+            cb({ type: 'modified', songs: [], song: songData });
+          } else if (change.type === 'removed') {
+            console.log('🗑️ Song removed:', songData.title);
+            cb({ type: 'removed', songs: [], song: songData });
+          }
+        });
+      }
+    }, (error) => {
+      console.error('Firebase onSnapshot error:', error);
+      cb({ type: 'initial', songs: [] }); // Send empty array on error
+    });
+
+    return unsubscribe;
+  } catch (e) {
+    console.error('getDJSongsOptimized error:', e);
+    cb({ type: 'initial', songs: [] }); // Send empty array on error
+    return () => {}; // Return empty cleanup function on error
+  }
+}
 export const getCurrentPlayingSongStatus = async (currentPlayingDocId:string,cb:(...args:any) => void) => {
   try {
       let q = query(collection(db, "currentPlayingSongs"), where("currentPlayingDocId", "==", currentPlayingDocId));

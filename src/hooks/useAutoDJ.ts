@@ -61,6 +61,11 @@ export const useAutoDJ = ({
 
 
 
+  // Create a signature that only changes when bid values actually change
+  const songsSignature = useMemo(() => {
+    return songs.map(song => `${song.id}:${song.currentBid || 0}:${song.title}`).join('|');
+  }, [songs]);
+
   // Smart queue management for dynamic bid updates
   const createDynamicQueue = useCallback(() => {
     if (!autoDJState.isEnabled) {
@@ -149,10 +154,11 @@ export const useAutoDJ = ({
     }
 
     return finalQueue;
-  }, [songs, autoDJState, deckA.currentTrack, deckB.currentTrack]);
+  }, [songsSignature, autoDJState.isEnabled, deckA.currentTrack?.id, deckB.currentTrack?.id]);
 
   // Get dynamic queue - memoized to prevent excessive recalculations
   const sortedSongs = useMemo(() => {
+    console.log('🔄 Recalculating Auto DJ queue...');
     return createDynamicQueue();
   }, [createDynamicQueue]);
 
@@ -246,10 +252,6 @@ export const useAutoDJ = ({
   }, [autoDJState.isEnabled, autoDJState.isTransitioning, autoDJState.activeDeck, deckA.currentTrack, deckB.currentTrack, sortedSongs, loadTrackToDeckA, loadTrackToDeckB]);
 
   // Monitor for queue changes (new bids) - optimized to only trigger on actual bid changes
-  const songsSignature = useMemo(() => {
-    return songs.map(song => `${song.id}:${song.currentBid || 0}`).join('|');
-  }, [songs]);
-
   useEffect(() => {
     if (autoDJState.isEnabled && !autoDJState.isTransitioning) {
       handleQueueUpdate();

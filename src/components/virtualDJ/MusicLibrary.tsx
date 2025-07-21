@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Music, Search, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAudioLogic } from '@/hooks/useAudioLogic';
@@ -40,6 +40,27 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
 
   // Search state for filtering tracks
   const [search, setSearch] = useState('');
+
+  // Memoized filtered and sorted songs to prevent expensive operations on every render
+  const sortedAndFilteredSongs = useMemo(() => {
+    console.log('🔄 Recalculating sorted songs list...');
+
+    // Filter songs based on search
+    const filteredSongs = songs.filter(song =>
+      song.title.toLowerCase().includes(search.toLowerCase()) ||
+      song.artist.toLowerCase().includes(search.toLowerCase())
+    );
+
+    // Sort songs by currentBid (highest first), then by title
+    return filteredSongs.sort((a, b) => {
+      const bidA = a.currentBid || 0;
+      const bidB = b.currentBid || 0;
+      if (bidA !== bidB) {
+        return bidB - bidA; // Higher bids first
+      }
+      return a.title.localeCompare(b.title); // Then alphabetical
+    });
+  }, [songs, search]); // Only recalculate when songs array or search changes
 
   // Handle cancel bid click
   const handleCancelBidClick = (song: Song) => {
@@ -123,21 +144,8 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
             <p className="text-gray-400 text-sm">No tracks available</p>
           </div>
         ) : (
-          // Sort songs by currentBid (highest first), then by title
-          [...songs]
-            .filter(song =>
-              song.title.toLowerCase().includes(search.toLowerCase()) ||
-              song.artist.toLowerCase().includes(search.toLowerCase())
-            )
-            .sort((a, b) => {
-              const bidA = a.currentBid || 0;
-              const bidB = b.currentBid || 0;
-              if (bidA !== bidB) {
-                return bidB - bidA; // Higher bids first
-              }
-              return a.title.localeCompare(b.title); // Then alphabetical
-            })
-            .map((song) => {
+          // Use memoized sorted and filtered songs
+          sortedAndFilteredSongs.map((song) => {
             const isPlaying = isSongPlaying(song.id);
             const hasBids = songHasBids(song.id);
             const bidAmount = getSongBidAmount(song.id);

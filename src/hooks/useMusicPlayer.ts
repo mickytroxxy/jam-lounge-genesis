@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { useAuth } from '@/contexts/AuthContext';
-import { getDJSongs } from '@/api';
+import { getDJSongs, getDJSongsOptimized } from '@/api';
 import { Song } from '@/Types';
 import {
   setDeckATrack,
@@ -23,6 +23,9 @@ import {
   setDeckAEffects,
   setDeckBEffects,
   setDJSongs,
+  addOrUpdateSong,
+  removeSong,
+  batchUpdateSongs,
   setLoadingSongs,
   setRecording,
   setRecordingDuration,
@@ -120,48 +123,57 @@ export const useMusicPlayer = () => {
 
     try {
       // Store the unsubscribe function for cleanup
+      djSongsUnsubscribeRef.current = getDJSongsOptimized(user.userId, 'ACTIVE', (changes) => {
+        console.log('🔄 getDJSongsOptimized changes:', changes.type);
+
+        if (changes.type === 'initial') {
+          // Initial load - replace entire array
+          console.log('📦 Initial load:', changes.songs.length, 'songs');
+          dispatch(setDJSongs(changes.songs));
+          dispatch(setLoadingSongs(false));
+
+          // Debug bid information
+          const songsWithBids = changes.songs.filter(song => song.currentBid && song.currentBid > 0);
+          if (songsWithBids.length > 0) {
+            console.log(`💰 Songs with bids: ${songsWithBids.length}`);
+            songsWithBids.forEach(song => {
+              console.log(`  - "${song.title}": ${song.currentBid} tokens`);
+            });
+          } else {
+            console.log('💰 No songs with active bids');
+          }
+        } else if (changes.type === 'added' && changes.song) {
+          // New song added - add to front of list (likely has a bid)
+          console.log('🆕 Adding new song:', changes.song.title, 'Bid:', changes.song.currentBid || 0);
+          dispatch(addOrUpdateSong(changes.song));
+        } else if (changes.type === 'modified' && changes.song) {
+          // Song updated - update in place
+          console.log('🔄 Updating song:', changes.song.title, 'Bid:', changes.song.currentBid || 0);
+          dispatch(addOrUpdateSong(changes.song));
+        } else if (changes.type === 'removed' && changes.song) {
+          // Song removed
+          console.log('🗑️ Removing song:', changes.song.title);
+          dispatch(removeSong(changes.song.id));
+        }
+      });
+    } catch (error) {
+      console.error('Error calling getDJSongsOptimized:', error);
+      // Fallback to original method if optimized version fails
+      console.log('🔄 Falling back to original getDJSongs method...');
       djSongsUnsubscribeRef.current = getDJSongs(user.userId, 'ACTIVE', (result: any) => {
-        console.log('getDJSongs result:', result);
-
-        // Handle different response formats
         let songs: Song[] = [];
-
         if (Array.isArray(result)) {
           songs = result;
         } else if (result && typeof result === 'object') {
-          // If result is an object, try to extract songs array
           if (Array.isArray(result.songs)) {
             songs = result.songs;
           } else if (Array.isArray(result.data)) {
             songs = result.data;
-          } else {
-            console.warn('Unexpected getDJSongs response format:', result);
-            songs = [];
           }
-        } else {
-          console.error('Invalid getDJSongs response:', result);
-          songs = [];
         }
-
         dispatch(setDJSongs(songs));
         dispatch(setLoadingSongs(false));
-        console.log('Loaded', songs.length, 'DJ songs');
-
-        // Debug bid information
-        const songsWithBids = songs.filter(song => song.currentBid && song.currentBid > 0);
-        if (songsWithBids.length > 0) {
-          console.log(`💰 Songs with bids: ${songsWithBids.length}`);
-          songsWithBids.forEach(song => {
-            console.log(`  - "${song.title}": ${song.currentBid} tokens`);
-          });
-        } else {
-          console.log('💰 No songs with active bids');
-        }
       });
-    } catch (error) {
-      console.error('Error calling getDJSongs:', error);
-      dispatch(setDJSongs([]));
-      dispatch(setLoadingSongs(false));
     }
   }, [dispatch, isAuthenticated, user?.userId]);
 

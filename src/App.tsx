@@ -14,6 +14,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import VirtualDJ from "./pages/VirtualDJ";
 import SmartTaskPrivacy from "./pages/smarttaskprivacy";
 import LoginModal from "./components/LoginModal";
+import PerformanceTest from "./components/test/PerformanceTest";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/virtual-dj" element={<VirtualDJ />} />
+                <Route path="/performance-test" element={<PerformanceTest />} />
                 <Route path="/terms" element={<TermsAndConditions />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/smarttaskprivacy" element={<SmartTaskPrivacy />} />
