@@ -17,6 +17,7 @@ export const useAudioLogic = (songs: Song[] = []) => {
     const dispatch = useDispatch();
     const {secrets} = useSecrets();
     const accountInfo = useAppSelector((state) => state.accountSlice.accountInfo);
+    const processedBidsRef = useRef<Set<string>>(new Set());
     const [audioState, setAudioState] = useState<AudioState>({
         currentPlayingSong: null,
         isPlaying: false,
@@ -26,29 +27,41 @@ export const useAudioLogic = (songs: Song[] = []) => {
 
     // Clear bid after 45 seconds of playing
     const clearCurrentBid = async (song:Song) => {
+        // Check if this song's bid has already been processed
+        if (processedBidsRef.current.has(song.id)) {
+            return;
+        }
+
         if (!song.currentBid || !song.currentBiders || song.currentBiders.length === 0) {
             console.log(`⚠️ No bid to clear for: ${song.title}`);
             return;
         }
-        const totalBid = (song?.currentBid || 0) * (secrets?.bidShare || 0.5);
-        const response = await handleTransaction({
-            amount: totalBid,
-            receiver: accountInfo?.userId || '',
-            sender: secrets?.appId || '',
-            type: 'transfer',
-            description: `Bid Share`
-        });
-        if(response){
-            const freshSongData = await getSongById(song.id);
-            await updateTable('music', song.id, {
-                ...freshSongData,
-                currentBiders: [],
-                currentBid: 0,
-                lastUpdated: Date.now()
+
+        // Mark this song as being processed before starting the transaction
+        processedBidsRef.current.add(song.id);
+        
+        try {
+            const totalBid = (song?.currentBid || 0) * (secrets?.bidShare || 0.5);
+            const success = await handleTransaction({
+                amount: totalBid,
+                receiver: accountInfo?.userId || '',
+                sender: secrets?.appId || '',
+                type: 'transfer',
+                description: `Bid Share`
             });
-            if(song?.isSuggested){
-                await deleteData('music',song?.id)
+            
+            if (success) {
+                await updateTable('music', song.id, {
+                    currentBiders: [],
+                    currentBid: 0,
+                    lastUpdated: Date.now()
+                });
+                if(song?.isSuggested){
+                    await deleteData('music', song?.id);
+                }
             }
+        } catch (error) {
+            processedBidsRef.current.delete(song.id);
         }
     }
 
@@ -157,7 +170,9 @@ export const useAudioLogic = (songs: Song[] = []) => {
                     const updatedSenderBalance = senderBalance - amount;
                     await updateTable("users",receiver, {balance:updatedReceiverBalance});
                     await updateTable("users",sender, {balance:updatedSenderBalance});
-                    dispatch(setAccountInfo({...accountInfo,balance:updatedSenderBalance}));
+                    if(receiver === accountInfo?.userId) {
+                        dispatch(setAccountInfo({...accountInfo,balance:updatedReceiverBalance}));
+                    }
                     if(createStatement){
                         await createData("transactions",transactionId,{transactionId,sender,receiver,amount,type,description,participants:[sender,receiver],date});
                     }

@@ -13,7 +13,7 @@ import { useDispatch } from 'react-redux';
 
 const Index = () => {
   const dispatch = useDispatch();
-
+  
   useEffect(() => {
     (async() =>{
       const secrets = await getSecretKeys();

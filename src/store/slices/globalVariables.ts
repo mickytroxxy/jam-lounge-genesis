@@ -37,7 +37,7 @@ const initialState: {secrets:SecretsType} = {
     playFee:0.5,
     bidShare:0.5,
     baseUrl:'https://play-server-913115376008.europe-west1.run.app',
-    appId:'LA10613716',
+    appId:'PL88518709',
     genres:[
       'Amapiano',
       'House',

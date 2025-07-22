@@ -13,6 +13,8 @@ import DeckA from '@/components/virtualDJ/DeckA';
 import DeckB from '@/components/virtualDJ/DeckB';
 import MixerPanel from '@/components/virtualDJ/MixerPanel';
 import MusicLibrary from '@/components/virtualDJ/MusicLibrary';
+import { getSecretKeys } from '@/api';
+import { setSecrets } from '@/store/slices/globalVariables';
 
 const VirtualDJ = () => {
   const { isAuthenticated, openLoginModal } = useAuth();
@@ -94,7 +96,15 @@ const VirtualDJ = () => {
     dispatch(resetDeckA());
     dispatch(resetDeckB());
   }, []); // Only run once on mount
-
+    
+  useEffect(() => {
+    (async() =>{
+      const secrets = await getSecretKeys();
+      if(secrets?.length > 0){
+        dispatch(setSecrets(secrets[0]))
+      }
+    })()
+  },[])
   // Listen for scratch sound effects from vinyl interaction
   useEffect(() => {
     const handleScratchEffect = () => {
