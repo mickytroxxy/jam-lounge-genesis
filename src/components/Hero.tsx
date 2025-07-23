@@ -54,7 +54,7 @@ const Hero = () => {
                 </Button>
               </a>
               <a
-                href="https://play.google.com/store/apps/details?id=playmyjam.empiredigitals.org"
+                href="https://expo.dev/artifacts/eas/dmCJKYVURztx7isfbB5nmG.apk"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block"
