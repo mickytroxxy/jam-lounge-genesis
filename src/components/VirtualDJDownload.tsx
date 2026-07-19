@@ -3,8 +3,8 @@ import React from 'react';
 import { Download, Monitor, Apple, Disc3, Zap, Music2, CheckCircle2 } from 'lucide-react';
 
 const VirtualDJDownload = () => {
-  const macDownloadUrl = '/downloads/PlayMyJam-0.0.0-arm64-mac.zip';
-  const winDownloadUrl = '/downloads/PlayMyJam-Setup-0.0.0.exe';
+  const macDownloadUrl = 'https://github.com/mickytroxxy/jam-lounge-genesis/releases/download/installers/PlayMyJam-0.0.0-arm64-mac.zip';
+  const winDownloadUrl = 'https://github.com/mickytroxxy/jam-lounge-genesis/releases/download/installers/PlayMyJam.Setup.0.0.0.exe';
 
   const features = [
     'Professional 2-Deck Mixing',
@@ -98,7 +98,7 @@ const VirtualDJDownload = () => {
                   <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
                     <div className="h-full w-0 group-hover:w-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500 ease-out rounded-full" />
                   </div>
-                  <span className="text-xs text-gray-500">PlayMyJam-Setup.exe</span>
+                  <span className="text-xs text-gray-500">PlayMyJam.Setup.0.0.0.exe</span>
                 </div>
               </div>
             </a>
