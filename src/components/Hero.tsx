@@ -97,12 +97,6 @@ const Hero = () => {
           <div className="relative flex justify-center lg:justify-end animate-slide-in-right">
             
             <div className="relative">
-              <Link to="/virtual-dj" className="block mt-6 mb-6 relative z-20">
-                <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-6 py-3 rounded-full shadow-xl hover-lift neon-glow w-full">
-                  <Play className="w-4 h-4 mr-2" />
-                  🎵 Launch PlayMyJam Mixer
-                </Button>
-              </Link>
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-2xl opacity-30 scale-110"></div>
               <div className="relative">
                 <img 

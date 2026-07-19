@@ -1,6 +1,8 @@
 
 import React from 'react';
-import { Download, Monitor, Apple, Disc3, Zap, Music2, CheckCircle2 } from 'lucide-react';
+import { Download, Monitor, Apple, Disc3, Zap, Music2, CheckCircle2, Globe } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const VirtualDJDownload = () => {
   const macDownloadUrl = 'https://github.com/mickytroxxy/jam-lounge-genesis/releases/download/installers/PlayMyJam-0.0.0-arm64-mac.zip';
@@ -141,6 +143,17 @@ const VirtualDJDownload = () => {
                 <span className="w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse" />
                 Version 1.0.0 — Latest stable release
               </span>
+            </div>
+
+            {/* Web App Link */}
+            <div className="text-center mt-6 pt-6 border-t border-white/5">
+              <p className="text-gray-400 text-sm mb-3">No installation required? Start mixing instantly in your browser.</p>
+              <Link to="/virtual-dj">
+                <Button size="lg" className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-8 py-3 rounded-full shadow-lg hover-lift neon-glow">
+                  <Globe className="w-4 h-4 mr-2" />
+                  Launch PlayMyJam Web Mixer
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
