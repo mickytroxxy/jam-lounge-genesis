@@ -38,15 +38,80 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
     isLoading: false
   });
 
+  // Source toggle state
+  const [source, setSource] = useState<'server' | 'local'>('server');
+  // Local songs state
+  const [localSongs, setLocalSongs] = useState<Song[]>([]);
+
   // Search state for filtering tracks
   const [search, setSearch] = useState('');
+
+  // Handle local files selection
+  const handleLocalFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files);
+    const newSongs: Song[] = files.map((file, i) => {
+      const url = URL.createObjectURL(file);
+      return {
+        id: `local-${Date.now()}-${i}`,
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        artist: 'Local Track',
+        albumArt: '',
+        url: url,
+        audioUrl: url,
+        duration: 0,
+        action: 'stop',
+        isPlaying: false,
+        isSuggested: false,
+        isLocal: true,
+      };
+    });
+    setLocalSongs(prev => [...prev, ...newSongs]);
+  };
+
+  const handleScanMusic = async () => {
+    if (window.electronAPI) {
+      try {
+        const paths = await window.electronAPI.scanMusic();
+        const newSongs: Song[] = paths.map((p, i) => {
+          const filename = p.split(/[/\\]/).pop() || 'Unknown Track';
+          const title = filename.replace(/\.[^/.]+$/, "");
+          const url = `local://${p}`;
+          return {
+            id: `local-sys-${Date.now()}-${i}`,
+            title,
+            artist: 'System Music',
+            albumArt: '',
+            url: url,
+            audioUrl: url,
+            duration: 0,
+            action: 'stop',
+            isPlaying: false,
+            isSuggested: false,
+            isLocal: true,
+          };
+        });
+        setLocalSongs(prev => {
+          const existingUrls = new Set(prev.map(s => s.url));
+          const uniqueNew = newSongs.filter(s => !existingUrls.has(s.url));
+          return [...prev, ...uniqueNew];
+        });
+      } catch (err) {
+        console.error('Error scanning music', err);
+      }
+    } else {
+      console.warn('electronAPI not found, are you running in Electron?');
+    }
+  };
 
   // Memoized filtered and sorted songs to prevent expensive operations on every render
   const sortedAndFilteredSongs = useMemo(() => {
     console.log('🔄 Recalculating sorted songs list...');
 
+    const activeSongs = source === 'server' ? songs : localSongs;
+
     // Filter songs based on search
-    const filteredSongs = songs.filter(song =>
+    const filteredSongs = activeSongs.filter(song =>
       song.title.toLowerCase().includes(search.toLowerCase()) ||
       song.artist.toLowerCase().includes(search.toLowerCase())
     );
@@ -60,7 +125,7 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
       }
       return a.title.localeCompare(b.title); // Then alphabetical
     });
-  }, [songs, search]); // Only recalculate when songs array or search changes
+  }, [songs, localSongs, search, source]); // Only recalculate when dependencies change
 
   // Handle cancel bid click
   const handleCancelBidClick = (song: Song) => {
@@ -119,26 +184,66 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
         </h3>
       </div>
 
+      {/* Toggle Source */}
+      <div className="flex rounded-md overflow-hidden mb-4 border border-gray-700">
+        <button 
+          onClick={() => setSource('server')} 
+          className={`flex-1 py-1.5 text-xs font-semibold transition-colors ${source === 'server' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+        >
+          PlayMyJam Server
+        </button>
+        <button 
+          onClick={() => setSource('local')} 
+          className={`flex-1 py-1.5 text-xs font-semibold transition-colors ${source === 'local' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+        >
+          Local Music
+        </button>
+      </div>
+
+      {/* Local Files Input & Scan */}
+      {source === 'local' && (
+        <div className="mb-4 space-y-2">
+          {window.electronAPI && (
+            <button 
+              onClick={handleScanMusic}
+              className="w-full text-center py-2 px-4 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition-colors shadow-lg"
+            >
+              Scan System Music Folder
+            </button>
+          )}
+          <label className="block w-full text-center py-2 px-4 rounded-md border border-dashed border-gray-600 bg-gray-800 hover:bg-gray-700 cursor-pointer transition-colors">
+            <span className="text-xs text-gray-300 font-semibold">Select Local Audio Files Manually</span>
+            <input 
+              type="file" 
+              multiple 
+              accept="audio/*" 
+              onChange={handleLocalFiles} 
+              className="hidden" 
+            />
+          </label>
+        </div>
+      )}
+
       {/* Instructions (replaced with search) */}
-      <div className="pt-3 border-t border-green-700 mb-4">
+      <div className="pt-3 border-t border-gray-700 mb-4">
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search tracks..."
-          className="w-full px-3 py-2 rounded bg-gray-800 text-white text-xs border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full px-3 py-2 rounded bg-gray-800 text-white text-xs border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
       </div>
 
       {/* Song List - Scrollable */}
       <div className="overflow-hidden">
         <div className="space-y-2 h-full overflow-y-auto custom-scrollbar pr-2">
-        {isLoadingSongs ? (
+        {isLoadingSongs && source === 'server' ? (
           <div className="text-center py-8">
             <div className="w-6 h-6 border border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             <p className="text-gray-400 text-sm">Loading music library...</p>
           </div>
-        ) : songs.length === 0 ? (
+        ) : sortedAndFilteredSongs.length === 0 ? (
           <div className="text-center py-8">
             <Music className="w-12 h-12 text-gray-600 mx-auto mb-2" />
             <p className="text-gray-400 text-sm">No tracks available</p>
@@ -155,7 +260,12 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
             return (
               <div
                 key={song.id}
-                className={`rounded-lg p-1 hover:bg-gray-700/50 transition-colors group ${
+                draggable={true}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('application/json', JSON.stringify(song));
+                  e.dataTransfer.effectAllowed = 'copy';
+                }}
+                className={`rounded-lg p-1 hover:bg-gray-700/50 transition-colors group cursor-grab active:cursor-grabbing ${
                   isPlaying
                     ? 'bg-gray-800/50 border-2 border-red-500' // Tomato border for playing songs
                     : 'bg-gray-800/30 border-2 border-transparent'

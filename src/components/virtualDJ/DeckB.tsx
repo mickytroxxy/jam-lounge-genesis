@@ -3,6 +3,8 @@ import { Play, Pause, SkipForward, SkipBack, Music, Disc, Zap, Waves, RotateCcw,
 import { Button } from '@/components/ui/button';
 import DiscoLights from './DiscoLights';
 import { useAudioLogic } from '@/hooks/useAudioLogic';
+import WaveformDisplay from './WaveformDisplay';
+import HotCuePads, { HOT_CUE_COLORS } from './HotCuePads';
 
 interface DeckBProps {
   deckB: any;
@@ -27,6 +29,7 @@ interface DeckBProps {
   toggleSlipMode?: () => void;
   // Disco lights
   discoLightsEnabled?: boolean;
+  onLoadTrack?: (song: any) => void;
 }
 
 const DeckB: React.FC<DeckBProps> = ({
@@ -50,6 +53,7 @@ const DeckB: React.FC<DeckBProps> = ({
   beatJump,
   toggleSlipMode,
   discoLightsEnabled = true,
+  onLoadTrack,
 }) => {
   // Local state for advanced features
   const [loopIn, setLoopInState] = useState<number | null>(null);
@@ -57,6 +61,7 @@ const DeckB: React.FC<DeckBProps> = ({
   const [isLooping, setIsLooping] = useState(false);
   const [cuePoint, setCuePointState] = useState<number | null>(null);
   const [isSlipMode, setIsSlipMode] = useState(false);
+  const [hotCues, setHotCues] = useState<(number | null)[]>(Array(8).fill(null));
   const [visualizerData, setVisualizerData] = useState<number[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
@@ -320,9 +325,50 @@ const DeckB: React.FC<DeckBProps> = ({
     };
   }, [isScratching, deckB.isPlaying, originalPlaybackRate]);
 
+  // Drag and Drop Handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const songData = e.dataTransfer.getData('application/json');
+    if (songData) {
+      try {
+        const song = JSON.parse(songData);
+        onLoadTrack?.(song);
+      } catch (err) {}
+    } else if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('audio/')) {
+        const url = URL.createObjectURL(file);
+        const song = {
+          id: `dropped-${Date.now()}`,
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          artist: 'Dropped File',
+          albumArt: '',
+          url: url,
+          audioUrl: url,
+          duration: 0,
+          action: 'stop',
+          isPlaying: false,
+          isSuggested: false,
+          isLocal: true,
+        };
+        onLoadTrack?.(song);
+      }
+    }
+  };
+
   return (
     <DiscoLights isPlaying={deckB.isPlaying} deckId="B" enabled={discoLightsEnabled}>
-      <div className="glass-card p-4 animate-fade-in-up font-montserrat-light" style={{animationDelay: '0.2s'}}>
+      <div 
+        className="glass-card p-4 animate-fade-in-up font-montserrat-light transition-colors hover:border-blue-500/50 border border-transparent" 
+        style={{animationDelay: '0.2s'}}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
       <div className="flex items-center gap-3 mb-8">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
           <Disc className="w-4 h-4 text-white" />
@@ -369,25 +415,55 @@ const DeckB: React.FC<DeckBProps> = ({
         </div>
       </div>
 
+      {/* Waveform Display */}
+      <div className="mb-3">
+        <WaveformDisplay
+          audioUrl={deckB.currentTrack?.audioUrl || deckB.currentTrack?.url}
+          position={deckB.position || 0}
+          duration={deckB.duration || 0}
+          isPlaying={deckB.isPlaying}
+          color="#3b82f6"
+          hotCues={hotCues}
+          hotCueColors={HOT_CUE_COLORS}
+          loopIn={loopIn}
+          loopOut={loopOut}
+          onSeek={(pos) => {
+            const audio = document.querySelector('#deckB-audio') as HTMLAudioElement;
+            if (audio) audio.currentTime = pos;
+          }}
+        />
+      </div>
+
       {/* Track Info */}
-      <div className="bg-gradient-to-r from-blue-500/20 to-transparent rounded-lg p-3 mb-4">
-        <p className="text-gray-300 text-xs">
-          {deckB.currentTrack ? `${deckB.currentTrack.artist} - ${deckB.currentTrack.title}` : 'Select a track to play'}
+      <div className="bg-gradient-to-r from-blue-500/20 to-transparent rounded-lg px-3 py-2 mb-3">
+        <p className="text-gray-300 text-xs truncate">
+          {deckB.currentTrack ? `${deckB.currentTrack.artist} - ${deckB.currentTrack.title}` : 'Drop a track or select from library'}
         </p>
-        {deckB.currentTrack && (
-          <div className="mt-2">
-            <div className="w-full bg-gray-700 rounded-full h-1">
-              <div
-                className="bg-blue-400 h-1 rounded-full transition-all duration-300"
-                style={{ width: `${deckB.duration > 0 ? (deckB.position / deckB.duration) * 100 : 0}%` }}
-              ></div>
-            </div>
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>{Math.floor(deckB.position / 60)}:{Math.floor(deckB.position % 60).toString().padStart(2, '0')}</span>
-              <span>{Math.floor(deckB.duration / 60)}:{Math.floor(deckB.duration % 60).toString().padStart(2, '0')}</span>
-            </div>
-          </div>
-        )}
+      </div>
+
+      {/* Hot Cues */}
+      <div className="mb-3">
+        <HotCuePads
+          hotCues={hotCues}
+          currentPosition={deckB.position || 0}
+          isDisabled={!deckB.currentTrack}
+          onSet={(index, pos) => {
+            const updated = [...hotCues];
+            updated[index] = pos;
+            setHotCues(updated);
+          }}
+          onJump={(index) => {
+            const pos = hotCues[index];
+            if (pos == null) return;
+            const audio = document.querySelector('#deckB-audio') as HTMLAudioElement;
+            if (audio) audio.currentTime = pos;
+          }}
+          onClear={(index) => {
+            const updated = [...hotCues];
+            updated[index] = null;
+            setHotCues(updated);
+          }}
+        />
       </div>
 
       {/* Deck Controls */}

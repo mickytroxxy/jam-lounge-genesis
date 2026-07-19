@@ -242,6 +242,7 @@ const VirtualDJ = () => {
                   jumpToCue={jumpToDeckACue}
                   beatJump={beatJumpDeckA}
                   discoLightsEnabled={discoLightsEnabled}
+                  onLoadTrack={loadTrackToDeckA}
                 />
               </div>
 
@@ -295,6 +296,7 @@ const VirtualDJ = () => {
                   jumpToCue={jumpToDeckBCue}
                   beatJump={beatJumpDeckB}
                   discoLightsEnabled={discoLightsEnabled}
+                  onLoadTrack={loadTrackToDeckB}
                 />
               </div>
             </div>

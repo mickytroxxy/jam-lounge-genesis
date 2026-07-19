@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import Hero from '../components/Hero';
 import Features from '../components/Features';
+import VirtualDJDownload from '../components/VirtualDJDownload';
 import AppPreview from '../components/AppPreview';
 import Merchandise from '../components/Merchandise';
 import HowItWorks from '../components/HowItWorks';
@@ -27,6 +28,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#222240] via-[#3a3a6a] to-[#222240]">
       <Hero />
       <Features />
+      <VirtualDJDownload />
       <AppPreview />
       <HowItWorks />
       <Merchandise />

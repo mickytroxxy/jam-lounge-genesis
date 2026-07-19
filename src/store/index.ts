@@ -1,6 +1,6 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import storage from './electronStorage';
 import accountSlice from './slices/accountInfo';
 import musicPlayerSlice from './slices/musicPlayerSlice';
 import globalVariables from './slices/globalVariables';
@@ -41,6 +41,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
+  whitelist: ['accountSlice', 'globalVariables'],
   blacklist: ['modalData', 'modalState', 'camera', 'ConfirmDialog', 'game'],
 };
 

@@ -200,6 +200,9 @@ export const useMusicPlayer = () => {
       deckAAudioRef.current.preload = 'metadata';
       deckAAudioRef.current.crossOrigin = 'anonymous'; // CORS enabled
       deckAAudioRef.current.setAttribute('data-deck', 'A'); // For disco lights
+      deckAAudioRef.current.id = 'deckA-audio';
+      deckAAudioRef.current.style.display = 'none';
+      document.body.appendChild(deckAAudioRef.current);
 
       // Add event listeners for proper state management
       deckAAudioRef.current.addEventListener('ended', () => {
@@ -221,6 +224,9 @@ export const useMusicPlayer = () => {
       deckBAudioRef.current.preload = 'metadata';
       deckBAudioRef.current.crossOrigin = 'anonymous'; // CORS enabled
       deckBAudioRef.current.setAttribute('data-deck', 'B'); // For disco lights
+      deckBAudioRef.current.id = 'deckB-audio';
+      deckBAudioRef.current.style.display = 'none';
+      document.body.appendChild(deckBAudioRef.current);
 
       // Add event listeners for proper state management
       deckBAudioRef.current.addEventListener('ended', () => {
