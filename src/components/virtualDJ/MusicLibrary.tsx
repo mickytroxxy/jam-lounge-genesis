@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Music, Search, User, X } from 'lucide-react';
+import { Music, Search, User, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAudioLogic } from '@/hooks/useAudioLogic';
 import { currencyFormatter } from '@/utils';
 import { Song } from '@/Types';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
+import AIMusicTab from '@/components/virtualDJ/AIMusicTab';
 
 interface MusicLibraryProps {
   songs: Song[];
@@ -38,8 +39,8 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
     isLoading: false
   });
 
-  // Source toggle state
-  const [source, setSource] = useState<'server' | 'local'>('server');
+  // Source toggle state — now includes 'ai'
+  const [source, setSource] = useState<'server' | 'local' | 'ai'>('server');
   // Local songs state
   const [localSongs, setLocalSongs] = useState<Song[]>([]);
 
@@ -190,15 +191,32 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
           onClick={() => setSource('server')} 
           className={`flex-1 py-1.5 text-xs font-semibold transition-colors ${source === 'server' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
         >
-          PlayMyJam Server
+          PlayMyJam
         </button>
         <button 
           onClick={() => setSource('local')} 
           className={`flex-1 py-1.5 text-xs font-semibold transition-colors ${source === 'local' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
         >
-          Local Music
+          Local
+        </button>
+        <button 
+          onClick={() => setSource('ai')} 
+          className={`flex-1 py-1.5 text-xs font-semibold transition-colors flex items-center justify-center gap-1 ${source === 'ai' ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+        >
+          <Sparkles className="w-3 h-3" />
+          AI
         </button>
       </div>
+
+      {/* AI Tab */}
+      {source === 'ai' && (
+        <div className="flex-1 overflow-hidden">
+          <AIMusicTab
+            loadTrackToDeckA={loadTrackToDeckA}
+            loadTrackToDeckB={loadTrackToDeckB}
+          />
+        </div>
+      )}
 
       {/* Local Files Input & Scan */}
       {source === 'local' && (
@@ -224,18 +242,21 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
         </div>
       )}
 
-      {/* Instructions (replaced with search) */}
-      <div className="pt-3 border-t border-gray-700 mb-4">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search tracks..."
-          className="w-full px-3 py-2 rounded bg-gray-800 text-white text-xs border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
-      </div>
+      {/* Search - only show for server/local tabs */}
+      {source !== 'ai' && (
+        <div className="pt-3 border-t border-gray-700 mb-4">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search tracks..."
+            className="w-full px-3 py-2 rounded bg-gray-800 text-white text-xs border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+      )}
 
       {/* Song List - Scrollable */}
+      {source !== 'ai' && (
       <div className="overflow-hidden">
         <div className="space-y-2 h-full overflow-y-auto custom-scrollbar pr-2">
         {isLoadingSongs && source === 'server' ? (
@@ -346,6 +367,7 @@ const MusicLibrary: React.FC<MusicLibraryProps> = ({
         )}
         </div>
       </div>
+      )}
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog

@@ -353,6 +353,28 @@ export const getTracksByGenre = async (genre: string, limitCount: number = 100):
   }
 };
 
+export const getAISongsByOwner = (ownerId: string, cb: (songs: any[]) => void) => {
+  try {
+    const q = query(
+      collection(db, 'music'),
+      where('ownerId', '==', ownerId),
+      where('genres', '==', 'AI')
+    );
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const data = querySnapshot.docs.map(doc => doc.data());
+      cb(data);
+    }, (error) => {
+      console.error('getAISongsByOwner onSnapshot error:', error);
+      cb([]);
+    });
+    return unsubscribe;
+  } catch (e) {
+    console.error('getAISongsByOwner error:', e);
+    cb([]);
+    return () => {};
+  }
+};
+
 export const searchTracks = async (searchTerm: string, limitCount: number = 100): Promise<any[]> => {
   try {
     // Firebase doesn't support text search directly, so we'll get all tracks and filter them
